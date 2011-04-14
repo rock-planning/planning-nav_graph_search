@@ -1,0 +1,22 @@
+<package>
+  <description brief="Algorithms to search trajectories in maps represented as graphs">
+  This package contains algorithms that allow to search for (optimal) trajectories in traversability maps, in which the search is done on a 8-neighbour graph
+  </description>
+  <author>Sylvain Joyeux/sylvain.joyeux@dfki.de</author>
+  <license></license>
+  <url>http://</url>
+  <logo>http://</logo>
+ <!--
+   To add any dependencies use the depend tag
+  <depend package="dummy-dependency-0" />
+	...
+  <depend package="dummy-dependency-n-1" />
+  <depend package="dummy-dependency-n" />
+-->
+<depend package="slam/envire" />
+<!--DEPEND-ENTRY-->
+  <versioncontrol type="git" url="" />
+  <export>
+    <cpp cflags="" lflags="" />
+  </export>
+</package>
