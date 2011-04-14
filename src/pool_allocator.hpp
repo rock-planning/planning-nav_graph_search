@@ -5,7 +5,7 @@
 #include <vector>
 #include <boost/cstdint.hpp>
 
-namespace corridor_planner
+namespace nav_graph_search
 {
     template<typename _Tp, typename _Alloc = std::allocator<_Tp> >
     class pool_allocator

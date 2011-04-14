@@ -1,9 +1,9 @@
 #ifndef NAV_GEOMETRY_TOOLS_HH
 #define NAV_GEOMETRY_TOOLS_HH
 
-#include <corridor_planner/point.hh>
+#include <nav_graph_search/point.hpp>
 
-namespace corridor_planner
+namespace nav_graph_search
 {
     template<typename _It>
     _It findNearest(_It begin, _It end, PointID const& p)

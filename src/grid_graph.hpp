@@ -1,13 +1,13 @@
 #ifndef NAV_GRID_GRAPH_HH
 #define NAV_GRID_GRAPH_HH
 
-#include <corridor_planner/grid_map.hh>
-#include <corridor_planner/point.hh>
+#include <nav_graph_search/grid_map.hpp>
+#include <nav_graph_search/point.hpp>
 
 #include <boost/type_traits.hpp>
 #include <boost/cstdint.hpp>
 
-namespace corridor_planner
+namespace nav_graph_search
 {
     class GridGraph;
 

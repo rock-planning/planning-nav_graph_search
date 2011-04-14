@@ -1,10 +1,10 @@
-#ifndef CORRIDOR_PLANNER_TRAVERSABILITY_CLASSIFIER_HH
-#define CORRIDOR_PLANNER_TRAVERSABILITY_CLASSIFIER_HH
+#ifndef nav_graph_search_TRAVERSABILITY_CLASSIFIER_HH
+#define nav_graph_search_TRAVERSABILITY_CLASSIFIER_HH
 
 #include <envire/Core.hpp>
 #include <envire/maps/Grid.hpp>
 
-namespace corridor_planner {
+namespace nav_graph_search {
     /** Classification of terrain into symbolic traversability classes, based on
      * different modalities.
      *

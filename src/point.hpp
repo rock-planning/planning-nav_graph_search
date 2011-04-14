@@ -9,7 +9,7 @@
 
 #include <Eigen/Core>
 
-namespace corridor_planner {
+namespace nav_graph_search {
     template<typename T>
     struct Point
     {

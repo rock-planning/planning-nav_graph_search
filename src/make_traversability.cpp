@@ -1,12 +1,12 @@
 #include "envire/Core.hpp"
 #include "envire/maps/Grid.hpp"
 #include "envire/maps/MLSGrid.hpp"
-#include "traversability_classifier.hh"
+#include "traversability_classifier.hpp"
 
 #include "boost/scoped_ptr.hpp"
 
 using namespace envire;
-using namespace corridor_planner;
+using namespace nav_graph_search;
 using namespace std;
      
 int main( int argc, char* argv[] )
@@ -91,7 +91,7 @@ int main( int argc, char* argv[] )
         ground_clearance = boost::lexical_cast<int>(argv[7]);
 
     // Create the convertion operator and run it
-    corridor_planner::TraversabilityClassifier *op = new TraversabilityClassifier(
+    nav_graph_search::TraversabilityClassifier *op = new TraversabilityClassifier(
             weight_force, force_threshold, max_speed, class_count, min_width, ground_clearance);
     env->attachItem( op );
     if (input->hasBand("mean_slope"))

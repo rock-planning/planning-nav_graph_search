@@ -1,4 +1,4 @@
-#include "traversability_map.hh"
+#include "traversability_map.hpp"
 
 #include <memory>
 #include <gdal.h>
@@ -9,7 +9,7 @@
 #include <Eigen/SVD>
 
 using namespace std;
-using namespace corridor_planner;
+using namespace nav_graph_search;
 
 PointID TraversabilityMap::toLocal(Eigen::Vector3d const& v) const
 {

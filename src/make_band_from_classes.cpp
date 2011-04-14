@@ -1,12 +1,12 @@
 #include "envire/Core.hpp"
 #include "envire/maps/Grid.hpp"
 // #include "envire/maps/MLSGrid.hpp"
-// #include "traversability_classifier.hh"
+// #include "traversability_classifier.hpp"
 
 // #include "boost/scoped_ptr.hpp"
 
 using namespace envire;
-// using namespace corridor_planner;
+// using namespace nav_graph_search;
 using namespace std;
 
 static double const UNKNOWN = -std::numeric_limits<double>::infinity();

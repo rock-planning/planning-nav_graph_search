@@ -1,6 +1,6 @@
-#include "traversability_classifier.hh"
+#include "traversability_classifier.hpp"
 
-using namespace corridor_planner;
+using namespace nav_graph_search;
 using envire::Grid;
 
 ENVIRONMENT_ITEM_DEF( TraversabilityClassifier );

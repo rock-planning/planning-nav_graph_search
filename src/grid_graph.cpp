@@ -1,8 +1,8 @@
-#include "grid_graph.hh"
+#include "grid_graph.hpp"
 
-using namespace corridor_planner;
+using namespace nav_graph_search;
 
-namespace corridor_planner {
+namespace nav_graph_search {
     static const int OPPOSITE_RELATIONS[] = 
         { 0,
         GridGraph::LEFT,
@@ -31,7 +31,7 @@ template<typename GC>
 float NeighbourGenericIterator<GC>::getValue() const { return m_graph->getValue(x(), y()); }
 template<typename GC>
 bool NeighbourGenericIterator<GC>::sourceIsParent() const 
-{ return m_graph->getParents(x(), y()) & corridor_planner::OPPOSITE_RELATIONS[m_neighbour]; }
+{ return m_graph->getParents(x(), y()) & nav_graph_search::OPPOSITE_RELATIONS[m_neighbour]; }
 
 template<typename GC>
 void NeighbourGenericIterator<GC>::findNextNeighbour()
@@ -46,19 +46,19 @@ void NeighbourGenericIterator<GC>::findNextNeighbour()
     }
 }
 
-template class NeighbourGenericIterator<corridor_planner::GridGraph const>;
-template class NeighbourGenericIterator<corridor_planner::GridGraph>;
+template class NeighbourGenericIterator<nav_graph_search::GridGraph const>;
+template class NeighbourGenericIterator<nav_graph_search::GridGraph>;
 
 void NeighbourIterator::setValue(float value)
 { m_graph->setValue(x(), y(), value); }
 void NeighbourIterator::setSourceAsParent()
 { 
-    m_graph->setParents(x(), y(), corridor_planner::OPPOSITE_RELATIONS[m_neighbour]);
+    m_graph->setParents(x(), y(), nav_graph_search::OPPOSITE_RELATIONS[m_neighbour]);
     m_graph->clearParent(sourceX(), sourceY(), getNeighbour());
 }
 void NeighbourIterator::setTargetAsParent()
 { 
-    m_graph->clearParent(x(), y(), corridor_planner::OPPOSITE_RELATIONS[m_neighbour]);
+    m_graph->clearParent(x(), y(), nav_graph_search::OPPOSITE_RELATIONS[m_neighbour]);
     m_graph->setParents(sourceX(), sourceY(), getNeighbour());
 }
 

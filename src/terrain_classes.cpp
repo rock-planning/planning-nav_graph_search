@@ -1,9 +1,9 @@
-#include "terrain_classes.hh"
+#include "terrain_classes.hpp"
 #include <fstream>
 #include <sstream>
 
 using namespace std;
-using namespace corridor_planner;
+using namespace nav_graph_search;
 
 std::list<TerrainClass> TerrainClass::load(std::string const& path)
 {

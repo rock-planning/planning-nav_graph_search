@@ -1,16 +1,16 @@
 #ifndef NAV_TRAVERSABILITY_MAP_HH
 #define NAV_TRAVERSABILITY_MAP_HH
 
-#include <corridor_planner/grid_map.hh>
-#include <corridor_planner/terrain_classes.hh>
-#include <corridor_planner/point.hh>
+#include <nav_graph_search/grid_map.hpp>
+#include <nav_graph_search/terrain_classes.hpp>
+#include <nav_graph_search/point.hpp>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <vector>
 #include <boost/cstdint.hpp>
 
-namespace corridor_planner
+namespace nav_graph_search
 {
     /** Objects of this class represent traversability maps. Traversability is
      * an integer value which can be represented on 4 bits (i.e. 16

@@ -1,15 +1,15 @@
 #ifndef NAV_DSTAR_HPP
 #define NAV_DSTAR_HPP
 
-#include <corridor_planner/point.hh>
-#include <corridor_planner/pool_allocator.hh>
-#include <corridor_planner/traversability_map.hh>
-#include <corridor_planner/grid_graph.hh>
+#include <nav_graph_search/point.hpp>
+#include <nav_graph_search/pool_allocator.hpp>
+#include <nav_graph_search/traversability_map.hpp>
+#include <nav_graph_search/grid_graph.hpp>
 
 #include <map>
 #include <stdexcept>
 
-namespace corridor_planner {
+namespace nav_graph_search {
     /** An implementation of the plain D* algorithm. DStar::costOfClass is the
      * method which transforms traversability value into a floating-point cost
      * value
