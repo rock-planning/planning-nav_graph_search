@@ -1,0 +1,8 @@
+build/
+*.swp
+test/*.pdf
+test/*.png
+*.pdf
+paper/full-*
+paper/small-*
+test/*.txt
