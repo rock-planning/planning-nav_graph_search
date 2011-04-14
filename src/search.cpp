@@ -1,4 +1,5 @@
 #include "search.hpp"
+#include <algorithm>
 
 using namespace nav_graph_search;
 
@@ -12,6 +13,11 @@ Search::Search(int width, int height)
     , m_goal_x(-1), m_goal_y(-1)
     , m_start_x(-1), m_start_y(-1)
 {
+}
+
+double Search::getHeuristic(int to_x, int to_y, int from_x, int from_y)
+{
+    return 0;
 }
 
 void Search::updated(int x, int y)
@@ -46,6 +52,10 @@ TraversabilitySearch::TraversabilitySearch(
             std::cerr << " class " << it->out << " has cost " << m_cost_of_class[it->out] << std::endl;
         }
     }
+
+    m_min_class_cost = *std::min_element(
+            m_cost_of_class, 
+            m_cost_of_class + TraversabilityMap::CLASSES_COUNT);
 }
 
 float TraversabilitySearch::costOfClass(int i) const { return m_cost_of_class[i]; }
@@ -78,5 +88,4 @@ void TraversabilitySearch::setTraversability(int x, int y, int klass)
     m_map.setValue(x, y, klass);
     updated(x, y);
 }
-
 

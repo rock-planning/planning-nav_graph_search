@@ -49,6 +49,8 @@ namespace nav_graph_search {
                 pool_allocator< std::pair<PointID, Cost> > > OpenFromNode;
         OpenFromNode m_open_from_node;
 
+        void run(int goal_x, int goal_y, int start_x, int start_y, double max_cost);
+
     public:
         DStar(TraversabilityMap& map, TerrainClasses const& classes = TerrainClasses());
 
@@ -68,8 +70,18 @@ namespace nav_graph_search {
          * map */
         void updated(int x, int y);
 
-        /** Update the trajectories for the given position */
-        void run(int goal_x, int goal_y, int start_x, int start_y);
+        /** Run the algorithm for the given goal and start point
+         *
+         * Returns the cost from the start point to the goal point
+         *
+         * @throw std::runtime_error if no solution can be found
+         */
+        virtual double run(int goal_x, int goal_y, int start_x, int start_y);
+
+        /** Continue expanding nodes until the lowest cost node to expand has a
+         * cost greater than \c cost
+         */
+        virtual void expandUntil(double max_cost);
 
         /** True if \c it points to a cell which has never been considered by
          * the algorithm */

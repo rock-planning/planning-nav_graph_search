@@ -199,7 +199,13 @@ bool DStar::isOpened(int x, int y) const
     return m_open_from_node.find(id) != m_open_from_node.end();
 }
 
-void DStar::run(int goal_x, int goal_y, int start_x, int start_y)
+double DStar::run(int goal_x, int goal_y, int start_x, int start_y)
+{
+    run(goal_x, goal_y, start_x, start_y, std::numeric_limits<double>::max());
+    return m_graph.getValue(m_start_x, m_start_y);
+}
+
+void DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cost)
 {
     if (!m_initialized || getGoalX() != goal_x || getGoalY() != goal_y)
     {
@@ -289,6 +295,22 @@ void DStar::run(int goal_x, int goal_y, int start_x, int start_y)
                 }
             }
         }
+
+        if (max_cost == 0)
+        {
+            if (X == PointID(start_x, start_y) && !isOpened(X.x, X.y))
+                break;
+        }
+        else
+        {
+            if (h_X + getHeuristic(m_goal_x, m_goal_y, X.x, X.y) < max_cost)
+                break;
+        }
     }
+}
+
+void DStar::expandUntil(double max_cost)
+{
+    run(m_goal_x, m_goal_y, m_start_x, m_start_y, max_cost);
 }
 
