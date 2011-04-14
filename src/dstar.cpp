@@ -22,42 +22,12 @@ ostream& operator << (ostream& io, DStar::Cost const& v)
 namespace nav_graph_search {
     static const float COST_GROWTH_1 = 0.3;
     static const float COST_GROWTH_0 = 0.01;
-    static const float DIAG_FACTOR = sqrt(2);
 }
 
 DStar::DStar(TraversabilityMap& map, TerrainClasses const& classes)
-    : m_map(map)
-    , m_graph(map.xSize(), map.ySize(), std::numeric_limits<float>::max())
+    : TraversabilitySearch(map, classes)
 {
-    if (classes.empty())
-    {
-        for (int i = 0; i < TraversabilityMap::CLASSES_COUNT; ++i)
-            m_cost_of_class[i] = TraversabilityMap::CLASSES_COUNT + 1 - i;
-    }
-    else
-    {
-        float map_scale = map.getScale();
-
-        for (int i = 0; i < TraversabilityMap::CLASSES_COUNT; ++i)
-            m_cost_of_class[i] = 1000000;
-
-        for (TerrainClasses::const_iterator it = classes.begin(); it != classes.end(); ++it)
-        {
-            float speed = it->cost;
-            if (speed == 0)
-                m_cost_of_class[it->out] = 1000000;
-            else
-                m_cost_of_class[it->out] = map_scale / speed;
-
-            cerr << " class " << it->out << " has cost " << m_cost_of_class[it->out] << endl;
-        }
-    }
 }
-
-GridGraph& DStar::graph()
-{ return m_graph; }
-GridGraph const& DStar::graph() const
-{ return m_graph; }
 
 void DStar::initialize(int goal_x, int goal_y)
 {
@@ -70,33 +40,10 @@ void DStar::initialize(int goal_x, int goal_y)
 
     m_graph.setValue(goal_x, goal_y, 0);
     insert(goal_x, goal_y, 0);
+    m_initialized = true;
 }
 
-float DStar::costOfClass(int i) const { return m_cost_of_class[i]; }
-float DStar::costOf(NeighbourConstIterator it) const
-{
-    float a = m_cost_of_class[m_map.getValue(it.sourceX(), it.sourceY())];
-    float b = m_cost_of_class[m_map.getValue(it.x(), it.y())];
-
-    if (it.getNeighbour() & GridGraph::DIR_STRAIGHT)
-        return a + b;
-
-    uint8_t next_neighbour = it.getNeighbour() << 1;
-    uint8_t prev_neighbour = it.getNeighbour() >> 1;
-    if (! next_neighbour)
-        next_neighbour = GridGraph::RIGHT;
-    else if (! prev_neighbour)
-        prev_neighbour = GridGraph::BOTTOM_RIGHT;
-
-    NeighbourConstIterator next = m_graph.getNeighbour(it.sourceX(), it.sourceY(), next_neighbour);
-    NeighbourConstIterator prev = m_graph.getNeighbour(it.sourceX(), it.sourceY(), prev_neighbour);
-
-    float c = m_cost_of_class[m_map.getValue(next.x(), next.y())];
-    float d = m_cost_of_class[m_map.getValue(prev.x(), prev.y())];
-    return (a + b + c + d) / 2 * nav_graph_search::DIAG_FACTOR;
-}
-
-float DStar::updated(int x, int y)
+void DStar::updated(int x, int y)
 { 
     if (isClosed(x, y))
         insert(x, y, m_graph.getValue(x, y));
@@ -106,7 +53,6 @@ float DStar::updated(int x, int y)
         if (isClosed(it))
             insert(it.x(), it.y(), it.getValue());
     }
-    return m_open_from_cost.begin()->first.value;
 }
 
 DStar::Cost DStar::insert(int x, int y, Cost new_cost)
@@ -241,12 +187,6 @@ std::pair<float, bool> DStar::updatedCostOf(int x, int y, bool check_consistency
 }
 
 
-void DStar::setTraversability(int x, int y, int klass)
-{
-    m_map.setValue(x, y, klass);
-    updated(x, y);
-}
-
 bool DStar::isNew(NeighbourConstIterator it) const 
 { return isNew(it.x(), it.y()); }
 bool DStar::isNew(int x, int y) const 
@@ -259,8 +199,15 @@ bool DStar::isOpened(int x, int y) const
     return m_open_from_node.find(id) != m_open_from_node.end();
 }
 
-void DStar::update()
+void DStar::run(int goal_x, int goal_y, int start_x, int start_y)
 {
+    if (!m_initialized || getGoalX() != goal_x || getGoalY() != goal_y)
+    {
+        initialize(goal_x, goal_y);
+    }
+    m_start_x = start_x;
+    m_start_y = start_y;
+
     /* This function is (in a loop) the implementation of the PROCESS-STATE()
      * function from the original D* algorithm
      *

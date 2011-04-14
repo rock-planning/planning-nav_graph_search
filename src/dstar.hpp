@@ -5,6 +5,7 @@
 #include <nav_graph_search/pool_allocator.hpp>
 #include <nav_graph_search/traversability_map.hpp>
 #include <nav_graph_search/grid_graph.hpp>
+#include <nav_graph_search/search.hpp>
 
 #include <map>
 #include <stdexcept>
@@ -14,17 +15,13 @@ namespace nav_graph_search {
      * method which transforms traversability value into a floating-point cost
      * value
      */
-    class DStar
+    class DStar : public TraversabilitySearch
     {
     public:
-        struct internal_error : public std::exception
+        struct internal_error : public std::runtime_error
         {
-            char const* m_message;
-            internal_error(char const* msg)
-                : m_message(msg) {}
-            ~internal_error() throw() { };
-
-            char const* what() const throw() { return m_message; }
+            internal_error(std::string const& msg)
+                : std::runtime_error(msg) {}
         };
 
         struct Cost {
@@ -45,20 +42,6 @@ namespace nav_graph_search {
         };
 
     private:
-        /** The underlying map we are acting on */
-        TraversabilityMap& m_map;
-
-        float m_cost_of_class[TraversabilityMap::CLASSES_COUNT];
-
-        /** The GridGraph object we use to store the algorithm state. The float
-         * value of a node in this graph stores the cost of the path from that
-         * cell to the goal
-         */
-        GridGraph m_graph;
-
-        /** The current goal */
-        int m_goal_x, m_goal_y;
-
         typedef std::multimap<Cost, PointID, std::less<Cost>,
                 pool_allocator< std::pair<Cost, PointID> > > OpenFromCost;
         OpenFromCost m_open_from_cost;
@@ -74,24 +57,19 @@ namespace nav_graph_search {
          */
         Cost insert(int x, int y, Cost value);
 
-        /** The graph object which is used to store D*'s results */
-        GridGraph& graph();
-
-        int getGoalX() const { return m_goal_x; }
-        int getGoalY() const { return m_goal_y; }
-
-        /** The graph object which is used to store D*'s results */
-        GridGraph const& graph() const;
-
-        /** Initializes the algorithm for the given position and goal */
+        /** Initializes the algorithm for the given goal
+         *
+         * You usually don't have to call this directly. run() will call it
+         * when needed
+         */
         void initialize(int goal_x, int goal_y);
 
         /** Announce that the given cell has been updated in the traversability
          * map */
-        float updated(int x, int y);
+        void updated(int x, int y);
 
         /** Update the trajectories for the given position */
-        void update();
+        void run(int goal_x, int goal_y, int start_x, int start_y);
 
         /** True if \c it points to a cell which has never been considered by
          * the algorithm */
@@ -114,22 +92,6 @@ namespace nav_graph_search {
         /** True if (\c x, \c y) is neither new nor opened */
         bool isClosed(int x, int y) const { return !isNew(x, y) && !isOpened(x, y); }
 
-        /** Returns the basic cost associated with the given terrain class */
-        float costOfClass(int i) const;
-
-        /** Computes the cost of crossing the edge represented by \c it
-         *
-         * The strategy is the following:
-         * <ul>
-         *  <li>use (a + b) / 2, where a and b are the costs of the source and
-         *     target cells, if we are going straight
-         *  <li>use (a + b + c + d) / 2, where a and b are the costs of the source
-         *     and target cells and c and d are the costs of the two adjacent cells.
-         *     This is used if we are going in diagonal.
-         * </ul>
-         */
-        float costOf(NeighbourConstIterator it) const;
-
         /** Returns the cost of (x, y) as stored in the open list. If the node
          * is not in the open list, the boolean returned is false. Otherwise,
          * the boolean is true and the float value is the new cost of the node
@@ -139,9 +101,6 @@ namespace nav_graph_search {
          * be used only for testing purposes
          */
         std::pair<float, bool> updatedCostOf(int x, int y, bool check_consistency = false) const;
-
-        /** Sets the traversability class to \c klass for the given cell */
-        void setTraversability(int x, int y, int klass);
 
         /** Checks that the current solution is consistent. It raises internal_error
          * if it is not the case */
