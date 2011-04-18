@@ -296,15 +296,18 @@ void DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cos
             }
         }
 
-        if (max_cost == 0)
+        if (max_cost >= 0)
         {
-            if (X == PointID(start_x, start_y) && !isOpened(X.x, X.y))
-                break;
-        }
-        else
-        {
-            if (h_X + getHeuristic(m_goal_x, m_goal_y, X.x, X.y) < max_cost)
-                break;
+            if (max_cost == 0)
+            {
+                if (X == PointID(start_x, start_y) && !isOpened(X.x, X.y))
+                    break;
+            }
+            else
+            {
+                if (h_X + getHeuristic(m_goal_x, m_goal_y, X.x, X.y) < max_cost)
+                    break;
+            }
         }
     }
 }
