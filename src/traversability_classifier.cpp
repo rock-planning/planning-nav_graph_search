@@ -1,4 +1,5 @@
 #include "traversability_classifier.hpp"
+#include <base/logging.h>
 
 using namespace nav_graph_search;
 using envire::Grid;
@@ -159,10 +160,7 @@ bool TraversabilityClassifier::updateAll()
     if (!has_data)
         throw std::runtime_error("TraversabilityClassifier: no input layer configured");
 
-    bool const has_slope = inputs[SLOPE],
-         has_max_step = inputs[MAX_STEP],
-         has_max_force = inputs[MAX_FORCE];
-    if (has_max_step && ground_clearance == 0)
+    if (inputs[MAX_STEP] && ground_clearance == 0)
         throw std::runtime_error("a max_step band is available, but the ground clearance is set to zero");
 
     double const class_width = 1.0 / class_count;
@@ -175,27 +173,34 @@ bool TraversabilityClassifier::updateAll()
             // Read the values for this cell. Set to CLASS_UNKNOWN and ignore the cell
             // if one of the available input bands has no information
             double values[INPUT_COUNT];
-            int band_idx = 0;
-            for (; band_idx < INPUT_COUNT; ++band_idx)
+            bool has_value[INPUT_COUNT];
+            for (int band_idx = 0; band_idx < INPUT_COUNT; ++band_idx)
             {
+                has_value[band_idx] = false;
                 if (!inputs[band_idx]) continue;
 
                 double value = (*inputs[band_idx])[y][x];
-                if (value == input_unknown[band_idx])
+                if (value != input_unknown[band_idx])
                 {
-                    result[y][x] = CLASS_UNKNOWN;
-                    break;
+                    values[band_idx] = value;
+                    has_value[band_idx] = true;
                 }
-                values[band_idx] = value;
             }
-            if (band_idx != INPUT_COUNT) // found an unknown value
-                continue;
+
+            bool has_slope = has_value[SLOPE],
+                 has_max_step    = has_value[MAX_STEP],
+                 has_max_force   = has_value[MAX_FORCE];
 
             // First, max_step is an ON/OFF threshold on the ground clearance
             // parameter
-            if (has_max_step && values[MAX_STEP] > ground_clearance)
+            if (has_max_step && (values[MAX_STEP] > ground_clearance))
             {
                 result[y][x] = CLASS_OBSTACLE;
+                continue;
+            }
+            if ((inputs[MAX_FORCE] && !has_value[MAX_FORCE]) || (inputs[SLOPE] && !has_value[SLOPE]))
+            {
+                result[y][x] = CLASS_UNKNOWN;
                 continue;
             }
 
