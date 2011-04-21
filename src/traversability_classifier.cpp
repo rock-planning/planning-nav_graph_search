@@ -285,36 +285,41 @@ struct RadialLUT
 
     void markAllRadius(boost::multi_array<uint8_t, 2>& result, int result_width, int result_height, int centerx, int centery, int value)
     {
+        int base_x = centerx - this->centerx;
+        int base_y = centery - this->centery;
         for (unsigned int y = 0; y < height; ++y)
         {
-            int map_y = centery + y - this->centery;
+            int map_y = base_y + y;
             if (map_y < 0 || map_y >= result_height)
                 continue;
 
             for (unsigned int x = 0; x < width; ++x)
             {
-                int map_x = centerx + x - this->centerx;
+                int map_x = base_x + x;
                 if (map_x < 0 || map_x >= result_width)
                     continue;
-                if (result[map_y][map_x] != value)
-                    continue;
-                if (!in_distance[y][x])
-                    continue;
-                markSingleRadius(result, centerx, centery, x, y, value);
+                if (in_distance[y][x] && result[map_y][map_x] == value)
+                {
+                    LOG_DEBUG("  found cell with value %i (expected %i) at %i %i, marking radius", result[map_y][map_x], value, map_x, map_y);
+                    markSingleRadius(result, centerx, centery, x, y, value, 255);
+                }
             }
         }
     }
 
-    void markSingleRadius(boost::multi_array<uint8_t, 2>& result, int centerx, int centery, int x, int y, int value)
+    void markSingleRadius(boost::multi_array<uint8_t, 2>& result, int centerx, int centery, int x, int y, int expected_value, int mark_value)
     {
         boost::tie(x, y) = parents[y][x];
         while (x != -1 && y != -1)
         {
-            uint8_t& current = result[centery + y - this->centery][centerx + x - this->centerx];
-            if (current == value)
+            int map_x = centerx + x - this->centerx;
+            int map_y = centery + y - this->centery;
+            uint8_t& current = result[map_y][map_x];
+            if (current == mark_value || current == expected_value)
                 return;
 
-            current = value;
+            current = mark_value;
+            LOG_DEBUG("  marking %i %i", map_x, map_y);
             boost::tie(x, y) = parents[y][x];
         }
     }
@@ -345,7 +350,19 @@ void TraversabilityClassifier::closeNarrowPassages(TraversabilityClassifier::Out
         {
             int value = data[y][x];
             if (value == CLASS_OBSTACLE)
+            {
+                LOG_DEBUG("inspecting around obstacle cell %i %i", x, y);
                 lut.markAllRadius(data, map.getWidth(), map.getHeight(), x, y, CLASS_OBSTACLE);
+            }
+        }
+    }
+
+    for (int y = 0; y < map.getHeight(); ++y)
+    {
+        for (int x = 0; x < map.getWidth(); ++x)
+        {
+            if (data[y][x] == 255)
+                data[y][x] = CLASS_OBSTACLE;
         }
     }
 }
