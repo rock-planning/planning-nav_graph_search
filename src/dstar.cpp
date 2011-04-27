@@ -32,7 +32,7 @@ DStar::DStar(TraversabilityMap& map, TerrainClasses const& classes)
 void DStar::initialize(int goal_x, int goal_y)
 {
     /** First, clear up everything */
-    m_graph.clear(std::numeric_limits<float>::max());
+    m_graph.clear(std::numeric_limits<float>::infinity());
     m_open_from_node.clear();
     m_open_from_cost.clear();
     m_goal_x = goal_x;
@@ -116,7 +116,15 @@ bool DStar::checkSolutionConsistency() const
 {
     bool has_error = false;
     for (int x = 0; x < (int)m_graph.xSize(); ++x)
+    {
         for (int y = 0; y < (int)m_graph.ySize(); ++y)
+        {
+            if (m_graph.getValue(x, y) == std::numeric_limits<float>::infinity())
+            {
+                // not expanded
+                continue;
+            }
+
             if (x != getGoalX() || y != getGoalY())
             {
                 NeighbourConstIterator parent = m_graph.parentsBegin(x, y);
@@ -151,6 +159,8 @@ bool DStar::checkSolutionConsistency() const
                             parent.x(), parent.y());
                 }
             }
+        }
+    }
 
     return !has_error;
 }
@@ -190,7 +200,7 @@ std::pair<float, bool> DStar::updatedCostOf(int x, int y, bool check_consistency
 bool DStar::isNew(NeighbourConstIterator it) const 
 { return isNew(it.x(), it.y()); }
 bool DStar::isNew(int x, int y) const 
-{ return m_graph.getValue(x, y) == std::numeric_limits<float>::max(); }
+{ return m_graph.getValue(x, y) == std::numeric_limits<float>::infinity(); }
 bool DStar::isOpened(NeighbourConstIterator it) const
 { return isOpened(it.x(), it.y()); }
 bool DStar::isOpened(int x, int y) const
