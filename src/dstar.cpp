@@ -211,7 +211,7 @@ bool DStar::isOpened(int x, int y) const
 
 double DStar::run(int goal_x, int goal_y, int start_x, int start_y)
 {
-    run(goal_x, goal_y, start_x, start_y, std::numeric_limits<double>::max());
+    run(goal_x, goal_y, start_x, start_y, 0);
     return m_graph.getValue(m_start_x, m_start_y);
 }
 
