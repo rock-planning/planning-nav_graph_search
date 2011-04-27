@@ -10,6 +10,13 @@
 #include <Eigen/Core>
 
 namespace nav_graph_search {
+    /** @deprecated 
+     *
+     * Template implementation of a 2D point
+     *
+     * This code is deprecated and should not be used in new code. Use
+     * Eigen::Vector2i instead
+     */
     template<typename T>
     struct Point
     {
@@ -72,6 +79,13 @@ namespace nav_graph_search {
     };
 
 
+    /** @deprecated
+     *
+     * Implementation of a 2D point in discrete space
+     *
+     * This code is deprecated and should not be used in new code. Use
+     * Eigen::Vector2i instead
+     */
     struct PointID : public Point<int> { 
         PointID() : Point<int>() {}
         PointID(int x, int y)
