@@ -315,7 +315,7 @@ void DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cos
             }
             else
             {
-                if (h_X + getHeuristic(m_goal_x, m_goal_y, X.x, X.y) < max_cost)
+                if (h_X + getHeuristic(m_start_x, m_start_y, X.x, X.y) > max_cost)
                     break;
             }
         }
