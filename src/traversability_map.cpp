@@ -13,7 +13,7 @@ using namespace nav_graph_search;
 
 PointID TraversabilityMap::toLocal(Eigen::Vector3d const& v) const
 {
-    Eigen::Transform3d world_to_local(getLocalToWorld().inverse());
+    Eigen::Affine3d world_to_local(getLocalToWorld().inverse());
     Eigen::Vector3i raster3d = (world_to_local * v).cast<int>();
     return PointID(raster3d.x(), raster3d.y());
 }
@@ -38,7 +38,7 @@ TraversabilityMap* TraversabilityMap::load(std::string const& path, TerrainClass
     double transform[6];
     set->GetGeoTransform(transform);
 
-    Eigen::Transform3d local_to_world;
+    Eigen::Affine3d local_to_world;
     local_to_world.matrix() <<
         transform[1], transform[2], 0, transform[0],
         transform[4], transform[5], 0, transform[3],
@@ -88,7 +88,7 @@ TraversabilityMap::TraversabilityMap(size_t width, size_t height, uint8_t init)
     , m_values((width * height + 1) / 2, init) { }
 
 TraversabilityMap::TraversabilityMap(size_t width, size_t height,
-        Eigen::Transform3d const& local_to_world, uint8_t init)
+        Eigen::Affine3d const& local_to_world, uint8_t init)
     : GridMap(width, height)
     , m_local_to_world(local_to_world)
     , m_values((width * height + 1) / 2, init)

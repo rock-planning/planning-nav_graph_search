@@ -18,7 +18,7 @@ namespace nav_graph_search
      */
     class TraversabilityMap : public GridMap
     {
-        Eigen::Transform3d m_local_to_world;
+        Eigen::Affine3d m_local_to_world;
 
         float m_scale;
 
@@ -38,7 +38,7 @@ namespace nav_graph_search
         /** Creates a new map with the given size in the X and Y axis */
         TraversabilityMap(size_t xsize, size_t ysize, boost::uint8_t fill = 0);
         TraversabilityMap(size_t xsize, size_t ysize,
-                Eigen::Transform3d const& local_to_world,
+                Eigen::Affine3d const& local_to_world,
                 boost::uint8_t fill = 0);
 
         /** Returns the size, in meters, of one pixel */
@@ -55,7 +55,7 @@ namespace nav_graph_search
         Eigen::Vector3d toWorld(PointID const& v) const;
 
         /** Returns the transformation from raster to world frame */
-        Eigen::Transform3d getLocalToWorld() const { return m_local_to_world; }
+        Eigen::Affine3d getLocalToWorld() const { return m_local_to_world; }
 
         /** Fills the map with the given traversability */
         void fill(boost::uint8_t value);
