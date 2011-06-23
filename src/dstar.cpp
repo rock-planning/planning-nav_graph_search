@@ -24,8 +24,8 @@ namespace nav_graph_search {
     static const float COST_GROWTH_0 = 0.01;
 }
 
-DStar::DStar(TraversabilityMap& map, TerrainClasses const& classes)
-    : TraversabilitySearch(map, classes)
+DStar::DStar(TraversabilityMap& map, TerrainClasses const& classes, int robotSize, bool inflateMax)
+    : TraversabilitySearch(map, classes, robotSize, inflateMax)
 {
 }
 
@@ -93,11 +93,13 @@ DStar::Cost DStar::insert(int x, int y, Cost new_cost)
 
         // We have to remove it first and then re-add it
         OpenFromCost::iterator it_cost, end;
+	
         boost::tie(it_cost, end) = m_open_from_cost.equal_range(k_X);
-        while (it_cost->second != point_id && it_cost != end)
-            ++it_cost;
-        assert(it_cost != end);
-
+        while (it_cost != end && it_cost->second != point_id){
+	    ++it_cost;
+	}
+	assert(it_cost!=end);
+	
         m_open_from_cost.erase(it_cost);
         it->second = new_cost;
     }
@@ -107,7 +109,7 @@ DStar::Cost DStar::insert(int x, int y, Cost new_cost)
             new_cost = h_X;
         m_open_from_node.insert( make_pair(point_id, new_cost) );
     }
-
+    
     m_open_from_cost.insert( make_pair(new_cost, point_id) );
     return new_cost;
 }

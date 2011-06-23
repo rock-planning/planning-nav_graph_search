@@ -52,7 +52,7 @@ namespace nav_graph_search {
         void run(int goal_x, int goal_y, int start_x, int start_y, double max_cost);
 
     public:
-        DStar(TraversabilityMap& map, TerrainClasses const& classes = TerrainClasses());
+        DStar(TraversabilityMap& map, TerrainClasses const& classes = TerrainClasses(), int robotSize = 0, bool inflateMax = false);
 
         /* Insert the following point in the open list, using the given value
          * as ordering value

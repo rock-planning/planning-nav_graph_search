@@ -86,12 +86,23 @@ namespace nav_graph_search {
         double m_min_class_cost;
 
         /** The underlying map we are acting on */
-        TraversabilityMap& m_map;
-
+        TraversabilityMap& m_classMap;
+	
+	/**This should be the radius of the the robot's footprint, which we assume to be of a circular form*/
+	int m_footPrint;
+	
+	/** The "average traversability cost" map. The cost of (x,y) is the average of the traversability costs of the cells withing
+	 the robot's footprint range*/
+	GridGraph m_costMap;
+	
+	/** The variable would be set to TRUE if we are taking the maximum cost around (x,y) in the range of the robot's footprint
+	 and FALSE if we are taking the average cost*/
+	bool m_inflateMax;
+	
     public:
         TraversabilitySearch(
                 TraversabilityMap& map,
-                TerrainClasses const& classes = TerrainClasses());
+                TerrainClasses const& classes = TerrainClasses(), int robotSize = 0, bool inflateMax = false);
 
         /** Returns the basic cost associated with the given terrain class */
         float costOfClass(int i) const;
@@ -111,7 +122,17 @@ namespace nav_graph_search {
 
         /** Sets the traversability class to \c klass for the given cell */
         void setTraversability(int x, int y, int klass);
+	
+	/**Finds the average cost around (x,y) in the range of the robot's footprint*/
+	float findAver(int x, int y) const;
 
+	/**Finds the maximum cost around (x,y) in the range of the robot's footprint*/
+	float findMax(int x, int y) const;
+	
+	/** Setter/Getter for the robot's footprint*/
+	void setFootPrint(int size){ m_footPrint = size; }
+	int getFootPrint() const { return m_footPrint; }
+	
         /** Returns an acceptable heuristic distance from (from_x, from_y) to
          * (to_x, to_y)
          *

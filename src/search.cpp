@@ -1,5 +1,6 @@
 #include "search.hpp"
 #include <algorithm>
+#include <cstdio>
 
 using namespace nav_graph_search;
 
@@ -25,9 +26,12 @@ void Search::updated(int x, int y)
 
 TraversabilitySearch::TraversabilitySearch(
         TraversabilityMap& map,
-        TerrainClasses const& classes)
+        TerrainClasses const& classes, int robotSize, bool inflateMax)
     : Search(map.xSize(), map.ySize())
-    , m_map(map)
+    , m_classMap(map)
+    , m_footPrint(robotSize)
+    , m_costMap(map.xSize(), map.ySize(), std::numeric_limits<float>::max())
+    , m_inflateMax(inflateMax)
 {
     if (classes.empty())
     {
@@ -37,7 +41,7 @@ TraversabilitySearch::TraversabilitySearch(
     else
     {
         float map_scale = map.getScale();
-
+	
         for (int i = 0; i < TraversabilityMap::CLASSES_COUNT; ++i)
             m_cost_of_class[i] = 1000000;
 
@@ -56,14 +60,21 @@ TraversabilitySearch::TraversabilitySearch(
     m_min_class_cost = *std::min_element(
             m_cost_of_class, 
             m_cost_of_class + TraversabilityMap::CLASSES_COUNT);
+    
+    for( int i = 0; i < map.xSize(); ++i )
+	 for( int j = 0; j < map.ySize(); ++j ){
+	   if( !m_inflateMax ) m_costMap.setValue( i, j, findAver(i, j));
+	   else m_costMap.setValue( i, j, findMax(i,j) );
+	 }
+    
 }
 
 float TraversabilitySearch::costOfClass(int i) const { return m_cost_of_class[i]; }
 
 float TraversabilitySearch::costOf(NeighbourConstIterator it) const
 {
-    float a = m_cost_of_class[m_map.getValue(it.sourceX(), it.sourceY())];
-    float b = m_cost_of_class[m_map.getValue(it.x(), it.y())];
+    float a = m_costMap.getValue(it.sourceX(), it.sourceY());
+    float b = m_costMap.getValue(it.x(), it.y());
 
     if (it.getNeighbour() & GridGraph::DIR_STRAIGHT)
         return a + b;
@@ -78,14 +89,67 @@ float TraversabilitySearch::costOf(NeighbourConstIterator it) const
     NeighbourConstIterator next = m_graph.getNeighbour(it.sourceX(), it.sourceY(), next_neighbour);
     NeighbourConstIterator prev = m_graph.getNeighbour(it.sourceX(), it.sourceY(), prev_neighbour);
 
-    float c = m_cost_of_class[m_map.getValue(next.x(), next.y())];
-    float d = m_cost_of_class[m_map.getValue(prev.x(), prev.y())];
+    float c = m_costMap.getValue(next.x(), next.y());
+    float d = m_costMap.getValue(prev.x(), prev.y());
     return (a + b + c + d) / 2 * nav_graph_search::DIAG_FACTOR;
+}
+
+float TraversabilitySearch::findAver(int x, int y) const{
+    int xsize = m_classMap.xSize();
+    int ysize = m_classMap.ySize();
+    
+    if( xsize > x + m_footPrint + 1 ) xsize = x + m_footPrint + 1;
+    if( ysize > y + m_footPrint + 1 ) ysize = y + m_footPrint + 1;
+    
+    float ans = 0;
+    int cnt = 0;
+    
+    for( int i = ((x-m_footPrint) < 0) ? 0 : (x-m_footPrint); i < xsize; ++i )
+      for( int j = ((y-m_footPrint) < 0) ? 0 : (y-m_footPrint); j < ysize; ++j )
+	if( (x - i) * (x - i) + (y - j) * (y - j) <= m_footPrint * m_footPrint + 1)
+	{
+	  ans += m_cost_of_class[m_classMap.getValue(i,j)];
+	  cnt++;
+	}
+return ans / cnt;
+}
+
+float TraversabilitySearch::findMax(int x, int y) const{
+    int xsize = m_classMap.xSize();
+    int ysize = m_classMap.ySize();
+    
+    if( xsize > x + m_footPrint + 1 ) xsize = x + m_footPrint + 1;
+    if( ysize > y + m_footPrint + 1 ) ysize = y + m_footPrint + 1;
+    
+    float ans = -std::numeric_limits<float>::max();
+    float tmp;
+    
+    for( int i = ((x-m_footPrint) < 0) ? 0 : (x-m_footPrint); i < xsize; ++i )
+      for( int j = ((y-m_footPrint) < 0) ? 0 : (y-m_footPrint); j < ysize; ++j )
+	if( (x - i) * (x - i) + (y - j) * (y - j) <= m_footPrint * m_footPrint + 1)
+	{
+	  float tmp = m_cost_of_class[m_classMap.getValue(i,j)];
+	  if( ans < tmp ) ans = tmp;
+	}
+return ans;
 }
 
 void TraversabilitySearch::setTraversability(int x, int y, int klass)
 {
-    m_map.setValue(x, y, klass);
+    m_classMap.setValue(x, y, klass);
+    
+    int xsize = m_classMap.xSize();
+    int ysize = m_classMap.ySize();
+    
+    if( xsize > x + m_footPrint + 1 ) xsize = x + m_footPrint + 1;
+    if( ysize > y + m_footPrint + 1 ) ysize = y + m_footPrint + 1;
+     
+    for( int i = ((x-m_footPrint) < 0) ? 0 : (x-m_footPrint); i < xsize; ++i )
+      for( int j = ((y-m_footPrint) < 0) ? 0 : (y-m_footPrint); j < ysize; ++j )
+	if( (x - i) * (x - i) + (y - j) * (y - j) <= m_footPrint * m_footPrint + 1)
+	{
+	    if( !m_inflateMax ) m_costMap.setValue( i, j, findAver(i,j) );
+	    else m_costMap.setValue( i, j, findMax(i,j) );
+	}
     updated(x, y);
 }
-
