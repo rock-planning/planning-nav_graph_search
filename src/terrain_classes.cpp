@@ -1,6 +1,7 @@
 #include "terrain_classes.hpp"
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 using namespace std;
 using namespace nav_graph_search;
@@ -9,6 +10,10 @@ std::list<TerrainClass> TerrainClass::load(std::string const& path)
 {
     list<TerrainClass> classes;
     ifstream class_file(path.c_str());
+
+    if (class_file.fail())
+        throw std::runtime_error("cannot load " + path);
+
     while (!class_file.eof())
     {
         char line[256];
