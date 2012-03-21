@@ -2,6 +2,7 @@
 
 #include <boost/tuple/tuple.hpp>
 #include <stdio.h>
+#include <base/float.h>
 #include <iostream>
 
 using namespace std;
@@ -26,7 +27,13 @@ namespace nav_graph_search {
 
 DStar::DStar(TraversabilityMap& map, TerrainClasses const& classes, int robotSize, bool inflateMax)
     : TraversabilitySearch(map, classes, robotSize, inflateMax)
+    , m_cutoff(0)
 {
+}
+
+void DStar::setCostCutoff(double cutoff)
+{
+    m_cutoff = cutoff;
 }
 
 void DStar::initialize(int goal_x, int goal_y)
@@ -213,11 +220,13 @@ bool DStar::isOpened(int x, int y) const
 
 double DStar::run(int goal_x, int goal_y, int start_x, int start_y)
 {
-    run(goal_x, goal_y, start_x, start_y, 0);
-    return m_graph.getValue(m_start_x, m_start_y);
+    if (run(goal_x, goal_y, start_x, start_y, 0))
+        return m_graph.getValue(m_start_x, m_start_y);
+    else
+        return base::unknown<double>();
 }
 
-void DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cost)
+bool DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cost)
 {
     if (!m_initialized || getGoalX() != goal_x || getGoalY() != goal_y)
     {
@@ -308,6 +317,11 @@ void DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cos
             }
         }
 
+        if (m_cutoff > 0)
+        {
+            if (h_X + getHeuristic(m_start_x, m_start_y, X.x, X.y) > m_cutoff)
+                return false;
+        }
         if (max_cost >= 0)
         {
             if (max_cost == 0)
@@ -322,6 +336,7 @@ void DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cos
             }
         }
     }
+    return true;
 }
 
 void DStar::expandUntil(double max_cost)

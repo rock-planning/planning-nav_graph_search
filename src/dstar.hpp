@@ -49,10 +49,17 @@ namespace nav_graph_search {
                 pool_allocator< std::pair<PointID, Cost> > > OpenFromNode;
         OpenFromNode m_open_from_node;
 
-        void run(int goal_x, int goal_y, int start_x, int start_y, double max_cost);
+        bool run(int goal_x, int goal_y, int start_x, int start_y, double max_cost);
+
+        double m_cutoff;
 
     public:
         DStar(TraversabilityMap& map, TerrainClasses const& classes = TerrainClasses(), int robotSize = 0, bool inflateMax = false);
+
+        /** Sets a cost above which the search is aborted, and NaN is returned.
+         * Set to zero (the default) to disable
+         */
+        void setCostCutoff(double cutoff);
 
         /* Insert the following point in the open list, using the given value
          * as ordering value
