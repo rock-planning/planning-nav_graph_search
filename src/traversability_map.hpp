@@ -10,6 +10,8 @@
 #include <vector>
 #include <boost/cstdint.hpp>
 
+#include <envire/maps/Grid.hpp>
+
 namespace nav_graph_search
 {
     /** Objects of this class represent traversability maps. Traversability is
@@ -88,6 +90,10 @@ namespace nav_graph_search
          * </code>
          */
         static TraversabilityMap* load(std::string const& path, TerrainClasses const& classes);
+        /** Creates a new map whose data is loaded from an envire Grid<uint8_t>
+         * map
+         */
+        static TraversabilityMap* load(envire::Grid<uint8_t> const& map, std::string const& band_name, TerrainClasses const& classes);
     };
 }
 

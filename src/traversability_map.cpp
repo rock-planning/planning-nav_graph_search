@@ -83,6 +83,47 @@ TraversabilityMap* TraversabilityMap::load(std::string const& path, TerrainClass
     return map.release();
 }
 
+TraversabilityMap* TraversabilityMap::load(envire::Grid<uint8_t> const& map, std::string const& band_name, TerrainClasses const& classes)
+{
+    envire::Grid<uint8_t>::ArrayType const& input_data = map.getGridData(band_name);
+    int xSize = map.getCellSizeX();
+    int ySize = map.getCellSizeY();
+    envire::Environment& env = *map.getEnvironment();
+    Eigen::Affine3d local_to_world = env.relativeTransform(map.getFrameNode(), env.getRootNode());
+
+    std::vector<uint8_t> data;
+    data.resize(xSize * ySize);
+
+    if (!classes.empty())
+    {
+        int klass_map[256];
+        for (int i = 0; i < 256; ++i)
+            klass_map[i] = -1;
+        for (TerrainClasses::const_iterator it = classes.begin(); it != classes.end(); ++it)
+            klass_map[it->in] = it->out;
+
+        for (int y = 0; y < ySize; ++y)
+        {
+            uint8_t const* line = &input_data[y][0];
+            for (int x = 0; x < ySize; ++x)
+            {
+                int out = klass_map[line[x]];
+                if (out == -1)
+                {
+                    cerr << "unknown class found: " << static_cast<int>(line[x]) << endl;
+                    return NULL;
+                }
+                data[y] = out;
+            }
+        }
+    }
+
+    auto_ptr<TraversabilityMap> result(new TraversabilityMap(xSize, ySize,
+                local_to_world, 0));
+    result->fill(data);
+    return result.release();
+}
+
 TraversabilityMap::TraversabilityMap(size_t width, size_t height, uint8_t init)
     : GridMap(width, height)
     , m_values((width * height + 1) / 2, init) { }
