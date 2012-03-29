@@ -110,7 +110,7 @@ TraversabilityMap* TraversabilityMap::load(envire::Grid<uint8_t> const& map, std
                 int out = klass_map[line[x]];
                 if (out == -1)
                 {
-                    cerr << "unknown class found: " << static_cast<int>(line[x]) << endl;
+                    cerr << "unknown class found at " << x << "x" << y << ": " << static_cast<int>(line[x]) << endl;
                     return NULL;
                 }
                 data[y] = out;
