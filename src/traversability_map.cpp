@@ -105,7 +105,7 @@ TraversabilityMap* TraversabilityMap::load(envire::Grid<uint8_t> const& map, std
         for (int y = 0; y < ySize; ++y)
         {
             uint8_t const* line = &input_data[y][0];
-            for (int x = 0; x < ySize; ++x)
+            for (int x = 0; x < xSize; ++x)
             {
                 int out = klass_map[line[x]];
                 if (out == -1)
