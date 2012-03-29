@@ -61,12 +61,39 @@ TraversabilitySearch::TraversabilitySearch(
             m_cost_of_class, 
             m_cost_of_class + TraversabilityMap::CLASSES_COUNT);
     
-    for( int i = 0; i < map.xSize(); ++i )
-	 for( int j = 0; j < map.ySize(); ++j ){
-	   if( !m_inflateMax ) m_costMap.setValue( i, j, findAver(i, j));
-	   else m_costMap.setValue( i, j, findMax(i,j) );
-	 }
-    
+    if (m_footPrint == 0)
+    {
+        for( int y = 0; y < map.ySize(); ++y )
+        {
+            for( int x = 0; x < map.xSize(); ++x )
+            {
+                float cost = m_cost_of_class[m_classMap.getValue(x,y)];
+                m_costMap.setValue(x, y,  cost);
+            }
+        }
+    }
+    else if (m_inflateMax)
+    {
+        for( int y = 0; y < map.ySize(); ++y )
+        {
+            for( int x = 0; x < map.xSize(); ++x )
+            {
+                float cost = findMax(x, y);
+                m_costMap.setValue( x, y, cost);
+            }
+        }
+    }
+    else
+    {
+        for( int y = 0; y < map.ySize(); ++y )
+        {
+            for( int x = 0; x < map.xSize(); ++x )
+            {
+                float cost = findAver(x, y);
+                m_costMap.setValue( x, y, cost);
+            }
+        }
+    }
 }
 
 float TraversabilitySearch::costOfClass(int i) const { return m_cost_of_class[i]; }
