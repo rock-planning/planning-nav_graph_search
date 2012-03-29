@@ -61,6 +61,13 @@ namespace nav_graph_search {
          */
         void setCostCutoff(double cutoff);
 
+        /** Returns a cost threshold above which the search is aborted and NaN
+         * is returned by update(). Change with setCostCutoff
+         *
+         * A value of zero (the default) means no cutoff
+         */
+        double getCostCutoff() const;
+
         /* Insert the following point in the open list, using the given value
          * as ordering value
          */

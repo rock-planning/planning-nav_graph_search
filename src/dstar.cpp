@@ -36,6 +36,11 @@ void DStar::setCostCutoff(double cutoff)
     m_cutoff = cutoff;
 }
 
+double DStar::getCostCutoff() const
+{
+    return m_cutoff;
+}
+
 void DStar::initialize(int goal_x, int goal_y)
 {
     /** First, clear up everything */
