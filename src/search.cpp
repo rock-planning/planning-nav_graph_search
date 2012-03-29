@@ -149,7 +149,6 @@ float TraversabilitySearch::findMax(int x, int y) const{
     if( ysize > y + m_footPrint + 1 ) ysize = y + m_footPrint + 1;
     
     float ans = -std::numeric_limits<float>::max();
-    float tmp;
     
     for( int i = ((x-m_footPrint) < 0) ? 0 : (x-m_footPrint); i < xsize; ++i )
       for( int j = ((y-m_footPrint) < 0) ? 0 : (y-m_footPrint); j < ysize; ++j )
