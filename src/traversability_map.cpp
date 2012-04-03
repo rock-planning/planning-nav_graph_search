@@ -97,8 +97,8 @@ TraversabilityMap* TraversabilityMap::load(envire::Grid<uint8_t> const& map, std
     //set correct scale
     local_to_world.scale(map.getScaleX());
     
-    std::vector<uint8_t> data;
-    data.resize(xSize * ySize);
+    auto_ptr<TraversabilityMap> result(new TraversabilityMap(xSize, ySize,
+                local_to_world, 0));
 
     if (!classes.empty())
     {
@@ -119,14 +119,11 @@ TraversabilityMap* TraversabilityMap::load(envire::Grid<uint8_t> const& map, std
                     cerr << "unknown class found at " << x << "x" << y << ": " << static_cast<int>(line[x]) << endl;
                     return NULL;
                 }
-                data[y] = out;
+                result->setValue(x,y, out);
             }
         }
     }
 
-    auto_ptr<TraversabilityMap> result(new TraversabilityMap(xSize, ySize,
-                local_to_world, 0));
-    result->fill(data);
     return result.release();
 }
 
