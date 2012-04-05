@@ -106,16 +106,13 @@ void GridGraph::save(std::ostream& io) const
     }
 }
 
-
-
-
 NeighbourIterator GridGraph::parentsBegin(size_t x, size_t y)
 { return NeighbourIterator(*this, x, y, getParents(x, y)); }
 NeighbourConstIterator GridGraph::parentsBegin(size_t x, size_t y) const
 { return NeighbourConstIterator(*this, x, y, getParents(x, y)); }
 static int neighboursMask(int x, int y, int xsize, int ysize)
 {
-    int mask = 0xFF;
+    int mask = GridGraph::DIR_ALL;
     mask &= ~((x == 0) * (GridGraph::BOTTOM_LEFT | GridGraph::LEFT | GridGraph::TOP_LEFT));
     mask &= ~((x == xsize - 1) * (GridGraph::BOTTOM_RIGHT | GridGraph::RIGHT | GridGraph::TOP_RIGHT));
     mask &= ~((y == 0) * (GridGraph::BOTTOM_LEFT | GridGraph::BOTTOM | GridGraph::BOTTOM_RIGHT));

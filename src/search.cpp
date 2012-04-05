@@ -106,11 +106,11 @@ float TraversabilitySearch::costOf(NeighbourConstIterator it) const
     if (it.getNeighbour() & GridGraph::DIR_STRAIGHT)
         return a + b;
 
-    uint8_t next_neighbour = it.getNeighbour() << 1;
-    uint8_t prev_neighbour = it.getNeighbour() >> 1;
-    if (! next_neighbour)
+    int next_neighbour = it.getNeighbour() << 1;
+    int prev_neighbour = it.getNeighbour() >> 1;
+    if (next_neighbour > GridGraph::BOTTOM_RIGHT)
         next_neighbour = GridGraph::RIGHT;
-    else if (! prev_neighbour)
+    else if (prev_neighbour == 0)
         prev_neighbour = GridGraph::BOTTOM_RIGHT;
 
     NeighbourConstIterator next = m_graph.getNeighbour(it.sourceX(), it.sourceY(), next_neighbour);
