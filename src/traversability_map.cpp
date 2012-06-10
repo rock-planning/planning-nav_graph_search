@@ -89,9 +89,11 @@ TraversabilityMap* TraversabilityMap::load(envire::Grid<uint8_t> const& map, std
     int xSize = map.getCellSizeX();
     int ySize = map.getCellSizeY();
     envire::Environment& env = *map.getEnvironment();
-    Eigen::Affine3d local_to_world = env.relativeTransform(map.getFrameNode(), env.getRootNode());
-    // also add the offset value from the grid to the transform
-    local_to_world.translation() += Eigen::Vector3d( map.getOffsetX(), map.getOffsetY(), 0 );
+    // generate the proper local to world transform, which is based
+    // on the framenode to root, as well as the offset
+    Eigen::Affine3d local_to_world = 
+	env.relativeTransform(map.getFrameNode(), env.getRootNode()) * 
+	Eigen::Translation3d( map.getOffsetX(), map.getOffsetY(), 0 );
 
     if(fabs(map.getScaleX() - map.getScaleY()) > 0.00001)
 	throw std::runtime_error("Scaling of non square pixels is not supported");
