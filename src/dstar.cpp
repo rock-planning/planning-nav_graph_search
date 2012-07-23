@@ -240,6 +240,14 @@ bool DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cos
     m_start_x = start_x;
     m_start_y = start_y;
 
+    const float OBSTACLE = 1000000;
+    
+    //check if goal or start are within an obstacle
+    if(m_costMap.getValue(m_start_x, m_start_y) == OBSTACLE || m_costMap.getValue(m_goal_x, m_goal_y) == OBSTACLE)
+    {
+	return false;
+    }
+    
     /* This function is (in a loop) the implementation of the PROCESS-STATE()
      * function from the original D* algorithm
      *
@@ -322,6 +330,16 @@ bool DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cos
             }
         }
 
+        if(h_X > OBSTACLE)
+	{
+	    //If this happens we can either not find a path
+	    //without driving through an wall or the navigation 
+	    //cost is so hight, that it might seem to be a good
+	    //idea to drive throug a wall. In any case it is a
+	    //failure. TODO perhaps throw here.
+	    return false;
+	}
+        
         if (m_cutoff > 0)
         {
             if (h_X + getHeuristic(m_start_x, m_start_y, X.x, X.y) > m_cutoff)
