@@ -94,6 +94,10 @@ namespace nav_graph_search
          * map
          */
         static TraversabilityMap* load(envire::Grid<uint8_t> const& map, std::string const& band_name, TerrainClasses const& classes);
+	
+	void dumpToStdOut();
+	
+	void writeToPPM(const std::string& filename);
     };
 }
 

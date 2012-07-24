@@ -183,3 +183,55 @@ void TraversabilityMap::setValue(size_t id, uint8_t value)
 void TraversabilityMap::setValue(size_t x, size_t y, uint8_t value)
 { return setValue(getCellID(x, y), value); }
 
+void TraversabilityMap::writeToPPM(const std::string& filename)
+{
+    uint8_t max = 0;
+    for( int y = 0; y < ySize(); ++y )
+    {
+	for( int x = 0; x < xSize(); ++x )
+	{
+	    max = std::max(max, getValue(x, y));
+	}
+    }
+    
+    std::cout << "Tr map max is " << (int) max << std::endl;
+    
+    std::ofstream cost_img;
+    cost_img.open((filename + std::string(".ppm")).c_str());
+    cost_img << "P6" << std::endl;
+    cost_img << xSize() << " " << ySize() << std::endl;
+    cost_img << "255" << std::endl;
+    for( int y = 0; y < ySize(); ++y )
+    {
+	for( int x = 0; x < xSize(); ++x )
+	{
+	    uint32_t curVal = getValue( x, y);
+	    uint8_t val = curVal * 255 / max;
+	    cost_img.write((const char *) &val, 1);
+	    cost_img.write((const char *) &val, 1);
+	    cost_img.write((const char *) &val, 1);
+	}
+    }    
+    cost_img.close();
+}
+
+void TraversabilityMap::dumpToStdOut()
+{
+    std::cout << std::endl;
+    for(int x = 0;x < xSize(); x++)
+    {
+	std::cout << std::setw(3) << x << " ";
+    }
+    std::cout << std::endl;
+    for(int y = 0; y < ySize(); y++)
+    {
+	std::cout << std::setw(3) << y << " ";
+	for(int x = 0;x < xSize(); x++)
+	{
+	    std::cout << std::setw(3) << (int) getValue(x, y) << " ";
+	}
+	std::cout << std::endl;
+    }
+}
+
+
