@@ -321,8 +321,15 @@ bool DStar::run(int goal_x, int goal_y, int start_x, int start_y, double max_cos
     const float OBSTACLE = 1000000;
     
     //check if goal or start are within an obstacle
-    if(m_costMap.getValue(m_start_x, m_start_y) == OBSTACLE || m_costMap.getValue(m_goal_x, m_goal_y) == OBSTACLE)
+    if(m_costMap.getValue(m_start_x, m_start_y) == OBSTACLE)
     {
+	std::cout << "Start position is within an obstacle" << std::endl;
+	return false;
+    }
+    
+    if(m_costMap.getValue(m_goal_x, m_goal_y) == OBSTACLE)
+    {
+	std::cout << "Goal position is within an obstacle" << std::endl;
 	return false;
     }
     
