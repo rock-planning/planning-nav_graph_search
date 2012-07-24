@@ -223,6 +223,84 @@ bool DStar::isOpened(int x, int y) const
     return m_open_from_node.find(id) != m_open_from_node.end();
 }
 
+void DStar::writeCostMap(const std::string& filename)
+{
+    const double obstacle = 1000000;
+
+    //find maximum cost in path
+    float max = std::numeric_limits< float >::min();
+    for( int y = 0; y < m_graph.ySize(); ++y )
+    {
+	for( int x = 0; x < m_graph.xSize(); ++x )
+	{
+	    float curVal = m_graph.getValue( x, y);
+	    if(curVal < obstacle && curVal != std::numeric_limits<float>::infinity() && curVal != std::numeric_limits<float>::max())
+	    {
+		max = std::max(curVal, max);
+	    }
+	}
+    }
+    std::cout << "Final Max value is " << max << std::endl;
+
+    std::ofstream cost_img;
+    cost_img.open((filename + std::string(".ppm")).c_str());
+    cost_img << "P6" << std::endl;
+    cost_img << m_graph.xSize() << " " << m_graph.ySize() << std::endl;
+    cost_img << "255" << std::endl;
+    for( int y = 0; y < m_graph.ySize(); ++y )
+    {
+	for( int x = 0; x < m_graph.xSize(); ++x )
+	{
+	    float curVal = m_graph.getValue( x, y);
+	    assert(curVal >= 0);
+	    if(curVal > obstacle || curVal == std::numeric_limits<float>::infinity() || curVal == std::numeric_limits<float>::max())
+	    {
+		//Unknown / never visited
+		if(curVal == std::numeric_limits<float>::infinity())
+		{
+		    uint8_t val = 0;
+		    cost_img.write((const char *) &val, 1);
+		    val = 255;
+		    cost_img.write((const char *) &val, 1);
+		    val = 0;
+		    cost_img.write((const char *) &val, 1);
+		}
+		else
+		{
+		    //This would be an error
+		    if(curVal == std::numeric_limits<float>::max())
+		    {
+			uint8_t val = 0;
+			cost_img.write((const char *) &val, 1);
+			cost_img.write((const char *) &val, 1);
+			val = 255;
+			cost_img.write((const char *) &val, 1);
+		    }
+		    else
+			//obstacle
+			if(curVal > obstacle)
+			{
+			    uint8_t val = 255;
+			    cost_img.write((const char *) &val, 1);
+			    val = 0;
+			    cost_img.write((const char *) &val, 1);
+			    cost_img.write((const char *) &val, 1);
+			} 
+		}
+	    }
+	    else
+	    {
+		//scale grey to maximum path cost
+		uint8_t val = curVal / max * 255;
+		cost_img.write((const char *) &val, 1);
+		cost_img.write((const char *) &val, 1);
+		cost_img.write((const char *) &val, 1);
+	    }
+	}
+    }    
+    cost_img.close();
+}
+
 double DStar::run(int goal_x, int goal_y, int start_x, int start_y)
 {
     if (run(goal_x, goal_y, start_x, start_y, 0))

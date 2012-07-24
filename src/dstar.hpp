@@ -56,6 +56,7 @@ namespace nav_graph_search {
     public:
         DStar(TraversabilityMap& map, TerrainClasses const& classes = TerrainClasses(), int robotSize = 0, bool inflateMax = false);
 
+	void writeCostMap(const std::string &filename);
         /** Sets a cost above which the search is aborted, and NaN is returned.
          * Set to zero (the default) to disable
          */
