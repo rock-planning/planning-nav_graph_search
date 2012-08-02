@@ -29,11 +29,11 @@ namespace nav_graph_search {
 
             Cost(float value) : value(value) {}
 
-            bool operator < (Cost const& other) const  { return value - other.value < -0.0001; }
-            bool operator <= (Cost const& other) const { return !(*this > other); }
-            bool operator > (Cost const& other) const  { return value - other.value > 0.0001; }
-            bool operator >= (Cost const& other) const { return !(*this < other); }
-            bool operator == (Cost const& other) const { return std::fabs(value - other.value) <= (value / 10000); }
+            bool operator < (Cost const& other) const  { return value < other.value; }
+            bool operator <= (Cost const& other) const { return (*this < other) || (other == *this); }
+            bool operator > (Cost const& other) const  { return value > other.value; }
+            bool operator >= (Cost const& other) const { return (*this > other) || (other == *this); }
+            bool operator == (Cost const& other) const { return std::fabs(value - other.value) <= 0.0000001; }
             bool operator != (Cost const& other) const { return !(*this == other); }
             Cost operator - (Cost const& other) const
             { return Cost(value - other.value); }
