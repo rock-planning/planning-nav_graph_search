@@ -206,7 +206,7 @@ void TraversabilityMap::writeToPPM(const std::string& filename)
 	for( int x = 0; x < xSize(); ++x )
 	{
 	    uint32_t curVal = getValue( x, y);
-	    uint8_t val = curVal * 255 / max;
+	    uint8_t val = max == 0 ? 255 : curVal * 255 / max;
 	    cost_img.write((const char *) &val, 1);
 	    cost_img.write((const char *) &val, 1);
 	    cost_img.write((const char *) &val, 1);
