@@ -22,14 +22,14 @@ namespace nav_graph_search
     {
         Eigen::Affine3d m_local_to_world;
 
-        float m_scale;
-
         /** The vector of values. Traversability is encoded on 4-bits fields, which
          * means that one uint8_t stores two cells. Moreover, values are stored
          * X-first, which means that the value for the cell (x, y) is at (y *
          * xsize + x).
          */
         std::vector<boost::uint8_t> m_values;
+
+        float m_scale;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW

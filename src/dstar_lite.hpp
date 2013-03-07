@@ -32,9 +32,9 @@ namespace nav_graph_search {
  * generating and updating the cost map regarding the footprint-size. 
  * The cost values are used (which requires smaller modifications)
  * to build up the internal DStar-Lite cost map.\n
- * In the current version the grid size should not exceed ~ 200x200 and the cost values
- * should be close to 1, otherwise the heuristic becomes useless. So, the robot speed 
- * should be described by m/sec.
+ * In the current version the cost values should be close to 0 (nav_graph cost map)
+ * respectively close to 1 (dstar_lite cost map), otherwise the heuristic becomes useless.
+ * This can be achieved by using a smaller grid size or different speed units e.g. m/minute.
  */
 class DStarLite : public TraversabilitySearch
 {
@@ -44,10 +44,11 @@ class DStarLite : public TraversabilitySearch
      * allocates the internal dstar_lite::DStarLite object.
      * \param map Contains the classes for each grid.
      * \param classes Maps the classes to a value representing the speed
-     * of the robot traversing the cell (should be m/sec). The passed map and the classes 
+     * of the robot traversing the cell (should be described by m/time). The passed map and the classes 
      * are used to generate a cost map containing (for each cell) the time for traversing.
      * The internal DStar-Lite cost map is synchronized with this cost map (containing
-     * some necessary adaption, e.g. >= 1000000 is mapped to -1 to represent obstacles).
+     * some necessary adaption: >= 1000000 are mapped to -1 to represent obstacles
+     * and all other costs are incremented by 1 to avoid costs between 0 and 1 [0,1)).
      * \param robotSize (footsize) If > 0 changing the class/cost of a cell will influence 
      * the surrounded cells as well (cells under the robot / under the foot). All
      * cells will be set to an average or the max value.

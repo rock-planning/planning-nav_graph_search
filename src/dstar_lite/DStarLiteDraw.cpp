@@ -139,7 +139,8 @@ void keyPressed(unsigned char key, int x, int y)
     break;
   case 'm':
   case 'M':
-    dstar->createMap(100,100,-2,10);
+    dstar->createMap(100,100,1,10, dstar_lite::DStarLite::MAP_GRADIENT); // Hills.
+    //dstar->createMap(150,150,1,2); // Realistic random field.
     dstar->replan();
     break;
   }

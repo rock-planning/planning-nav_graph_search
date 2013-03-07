@@ -1,4 +1,4 @@
-FLAGS=-O2 -Wno-deprecated
+FLAGS=-g -Wno-deprecated
 DEFS= -D USE_OPEN_GL -D MACOS
 
 LIBS= -framework OpenGL -framework GLUT -lm -L/usr/local/lib

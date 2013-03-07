@@ -4,6 +4,7 @@
 #include <stdlib.h>     /* srand, rand */
 #include <stdio.h>
 #include <time.h>       /* time */
+#include <sys/time.h>
 
 #include <sstream>
 
@@ -13,11 +14,15 @@
 using namespace nav_graph_search;
 using namespace envire;
 
-size_t width = 200;
-size_t height = 200;
-TraversabilityMap trav_map(width, height, 0, 1); // Fill with class 0, size of each cell / pixel is set to one meter.
+size_t width = 500;
+size_t height = 500;
+int num_change_goal = 4;
+int num_change_start = 10;
+// Fill with class 0, size of each cell / pixel is set to 0.05m (smaller grids means reduced costs).
+TraversabilityMap trav_map(width, height, 0, 0.05); // Exploring a 25x25m area.
 TerrainClasses terrain_classes;
 
+// Using random values for each cell, which is suboptimal for planning.
 BOOST_AUTO_TEST_CASE( create_traversibility_map )
 {
     // Add classes (0 to 16) to the map.
@@ -61,16 +66,17 @@ void randUpdateMap(DStarLite& dstar_lite) {
     }
 };
 
-BOOST_AUTO_TEST_CASE( dstar_lite_planner_norobotsize_noinflatemax )
-{
-    DStarLite dstar_lite(trav_map, terrain_classes, 0, false);
+timeval start, end;
+
+void executePlanning(DStarLite& dstar_lite, std::string test_description) {
     double path_cost = 0;
     int start_x, start_y, goal_x, goal_y;
     printf("%d map updates will be executed after each new start position\n", width);
-    for(int i_goal=0; i_goal<10; ++i_goal) {
+    gettimeofday(&start, 0);    
+    for(int i_goal=0; i_goal<num_change_goal; ++i_goal) {
         goal_x = rand()%width;
         goal_y = rand()%height;
-        for(int i_start=0; i_start<10; ++i_start) {   
+        for(int i_start=0; i_start<num_change_start; ++i_start) {   
             start_x = rand()%width;
             start_y = rand()%height;
             randUpdateMap(dstar_lite);
@@ -78,6 +84,34 @@ BOOST_AUTO_TEST_CASE( dstar_lite_planner_norobotsize_noinflatemax )
             printf("Path from start (%d,%d) to goal (%d,%d) cost: %4.2f sec.\n", start_x, start_y, goal_x, goal_y, path_cost);  
         }
     }
+    gettimeofday(&end, 0);
+    double time_passed_ms = (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+    printf("%s took %4.2f ms\n", test_description.c_str(), time_passed_ms);
 }
+
+
+
+BOOST_AUTO_TEST_CASE( dstar_lite_planner_norobotsize_noinflatemax )
+{
+    // IOnly single cells are updated (not affecting the surrounding cells).
+    
+    DStarLite dstar_lite(trav_map, terrain_classes, 0, false);
+    executePlanning(dstar_lite, "norobotsize_noinflatemax");   
+}
+
+BOOST_AUTO_TEST_CASE( dstar_lite_planner_robotsize_noinflatemax )
+{
+    // Uses the average cost within the footprint-/robot-size for updates.
+    DStarLite dstar_lite(trav_map, terrain_classes, 0.1 , false);
+    executePlanning(dstar_lite, "robotsize_noinflatemax");
+}
+
+BOOST_AUTO_TEST_CASE( dstar_lite_planner_robotsize_inflatemax )
+{
+    // Uses the maximal cost within the footprint-/robot-size for updates.
+    DStarLite dstar_lite(trav_map, terrain_classes, 0.1 , true);
+    executePlanning(dstar_lite, "robotsize_inflatemax");
+}
+
 
 

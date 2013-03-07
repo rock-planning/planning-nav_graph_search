@@ -149,13 +149,34 @@ void DStarLite::createMap(int width, int height, double min_cost, double max_cos
   int y_start = s_start.y - height/2;
   int y_end = s_start.y + height/2;
 
+  // Initialize map with C1 and drawing a border.
+  for(int x = x_start; x < x_end; ++x) {
+    for(int y = y_start; y < y_end; ++y) {
+      cell_cost = C1;
+      if(x == x_start || x == x_end-1 || y == y_start || y == y_end-1) {
+        cell_cost = -1;
+      }
+      updateCell(x,y,cell_cost);
+    }
+  }  
+
   switch(map_type) {
     case MAP_GRADIENT: {
-      fprintf(stderr, "Gradient map is not implemented yet, using random\n");
+      int hill_center_x = 0;
+      int hill_center_y = 0;
+      int hill_radius;
+      for(int i=0; i<width; ++i) {
+        hill_radius = (rand() % 10) + 1;
+        hill_center_x = rand()%(x_end-x_start) + x_start;
+        hill_center_y = rand()%(y_end - y_start) + y_start;
+        createHill(x_start+1, x_end-1, y_start+1, y_end-1,
+            hill_center_x, hill_center_y, max_cost, hill_radius, C1+1);
+      }
+      break;
     }
     case MAP_RANDOM: {
-      for(int x=x_start; x<x_end; ++x) {
-        for(int y=y_start; y<y_end; ++y) {
+      for(int x=x_start+1; x<x_end-1; ++x) {
+        for(int y=y_start+1; y<y_end-1; ++y) {
           cell_cost = fRand(min_cost, max_cost) - shift;
           // Create border arounf the map.
           if(x == x_start || x == x_end-1 || y == y_start || y == y_end-1) {
@@ -164,10 +185,69 @@ void DStarLite::createMap(int width, int height, double min_cost, double max_cos
           updateCell(x,y,cell_cost < 1 ? -1 : cell_cost);
         }
       }
+      smoothMap(x_start+1, x_end-1, y_start+1, y_end-1, 2);
       break;
     }
   }
 }
+
+void DStarLite::createHill(int map_start_x, int map_stop_x, int map_start_y, int map_stop_y, 
+    int hill_center_x, int hill_center_y, double max_cost, double cur_radius, double cur_cost) {
+  if(cur_radius <= 0)
+    return;
+
+  if(cur_cost > max_cost)
+    cur_cost = max_cost;
+
+  int start_x = hill_center_x - cur_radius;
+  int stop_x = hill_center_x + cur_radius;
+  int start_y = hill_center_y - cur_radius;
+  int stop_y = hill_center_y + cur_radius;
+
+  if(start_x < map_start_x) start_x = map_start_x;
+  if(start_y < map_start_y) start_y = map_start_y;
+  if(stop_x > map_stop_x) stop_x = map_stop_x; // -1 ?
+  if(stop_y > map_stop_y) stop_y = map_stop_y; // -1 ?
+
+  double dist = 0;
+  double radius_2 = cur_radius * cur_radius;
+  for(int x = start_x; x < stop_x; ++x) {
+    for(int y = start_y; y < stop_y; ++y) {
+      dist = (hill_center_x - x) * (hill_center_x - x) + 
+          (hill_center_y - y) * (hill_center_y - y);
+      if(dist <= radius_2) {
+        updateCell(x,y,cur_cost < 1 ? -1 : cur_cost);
+      }
+    }
+  }  
+  createHill(map_start_x, map_stop_x, map_start_y, map_stop_y, hill_center_x, hill_center_y, max_cost, cur_radius-1, cur_cost+1);
+}
+
+void DStarLite::smoothMap(int map_start_x, int map_stop_x, int map_start_y, int map_stop_y, int filter_size) {
+  double sum = 0;
+  double cost = 0;
+  double affected_cell_counter = 0;
+  for(int x = map_start_x + filter_size; x < map_stop_x - filter_size; ++x) {
+    for(int y = map_start_y + filter_size; y < map_stop_y - filter_size; ++y) {
+      sum = 0;
+      affected_cell_counter = 0;
+      getCost(x, y, cost);
+      if(cost < 1) // Ignore obstacles. 
+        continue;
+      for(int x_f = x - filter_size; x_f < x + filter_size; ++x_f) {
+        for(int y_f = y - filter_size; y_f < y + filter_size; ++y_f) {
+          getCost(x_f, y_f, cost);   
+          if(cost > 1) { // Only use free cells for filtering.
+            sum += cost;
+            affected_cell_counter++;
+          }
+        }
+      }
+      updateCell(x,y, sum / affected_cell_counter);
+    }
+  }
+}
+
 
 ////////////// PRIVATE //////////////
 

@@ -167,6 +167,10 @@ class DStarLite {
   bool   isValid(state u);
   float  keyHashCode(state u);
 
+  void createHill(int map_start_x, int map_stop_x, int map_start_y, int map_stop_y, 
+      int hill_center_x, int hill_center_y, double max_cost, double cur_radius, double cur_cost);
+  void smoothMap(int map_start_x, int map_stop_x, int map_start_y, int map_stop_y, int filter_size);
+
   inline double fRand(double min, double max)
   {
     double val = (double)rand() / RAND_MAX;
