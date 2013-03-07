@@ -131,9 +131,9 @@ TraversabilityMap* TraversabilityMap::load(envire::Grid<uint8_t> const& map, std
     return result.release();
 }
 
-TraversabilityMap::TraversabilityMap(size_t width, size_t height, uint8_t init)
+TraversabilityMap::TraversabilityMap(size_t width, size_t height, uint8_t init, float scale)
     : GridMap(width, height)
-    , m_values((width * height + 1) / 2, init) { }
+    , m_values((width * height + 1) / 2, init), m_scale(scale) { }
 
 TraversabilityMap::TraversabilityMap(size_t width, size_t height,
         Eigen::Affine3d const& local_to_world, uint8_t init)

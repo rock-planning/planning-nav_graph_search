@@ -138,7 +138,7 @@ float TraversabilitySearch::findAver(int x, int y) const{
 	  ans += m_cost_of_class[m_classMap.getValue(i,j)];
 	  cnt++;
 	}
-return ans / cnt;
+    return ans / cnt;
 }
 
 float TraversabilitySearch::findMax(int x, int y) const{
@@ -167,15 +167,23 @@ void TraversabilitySearch::setTraversability(int x, int y, int klass)
     int xsize = m_classMap.xSize();
     int ysize = m_classMap.ySize();
     
-    if( xsize > x + m_footPrint + 1 ) xsize = x + m_footPrint + 1;
-    if( ysize > y + m_footPrint + 1 ) ysize = y + m_footPrint + 1;
+    if( xsize > x + m_footPrint + 1 ) {
+        xsize = x + m_footPrint + 1;
+    }
+    if( ysize > y + m_footPrint + 1 ) {
+        ysize = y + m_footPrint + 1;
+    }
      
-    for( int i = ((x-m_footPrint) < 0) ? 0 : (x-m_footPrint); i < xsize; ++i )
-      for( int j = ((y-m_footPrint) < 0) ? 0 : (y-m_footPrint); j < ysize; ++j )
-	if( (x - i) * (x - i) + (y - j) * (y - j) <= m_footPrint * m_footPrint + 1)
-	{
-	    if( !m_inflateMax ) m_costMap.setValue( i, j, findAver(i,j) );
-	    else m_costMap.setValue( i, j, findMax(i,j) );
-	}
-    updated(x, y);
+    for( int i = ((x-m_footPrint) < 0) ? 0 : (x-m_footPrint); i < xsize; ++i ) {
+        for( int j = ((y-m_footPrint) < 0) ? 0 : (y-m_footPrint); j < ysize; ++j ) {
+            if( (x - i) * (x - i) + (y - j) * (y - j) <= m_footPrint * m_footPrint + 1)
+            {
+                if( !m_inflateMax ) 
+                    m_costMap.setValue( i, j, findAver(i,j) );
+                else
+                    m_costMap.setValue( i, j, findMax(i,j) );
+            }
+            updated(x, y);
+        }
+    }
 }

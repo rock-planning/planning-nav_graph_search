@@ -37,8 +37,8 @@ namespace nav_graph_search
         /** How much classes can be stored in this map */
         static const int CLASSES_COUNT = 16;
 
-        /** Creates a new map with the given size in the X and Y axis */
-        TraversabilityMap(size_t xsize, size_t ysize, boost::uint8_t fill = 0);
+        /** Creates a new map with the given size in the X and Y axis, scale defines the size of each cell/pixel in meters */
+        TraversabilityMap(size_t xsize, size_t ysize, boost::uint8_t fill = 0, float scale = 1);
         TraversabilityMap(size_t xsize, size_t ysize,
                 Eigen::Affine3d const& local_to_world,
                 boost::uint8_t fill = 0);
