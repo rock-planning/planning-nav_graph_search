@@ -18,8 +18,9 @@ rock_library(nav_graph_search
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 pkg_check_modules(GL REQUIRED gl)
-if (OPENGL_FOUND AND GLUT_FOUND AND GL_FOUND)
-message("-- OpenGL, GLUT and GL found, dstar-lite test program will be created")
+# GLUT seems to be found even if Xmu or Xi are not available.
+if (OPENGL_FOUND AND GLUT_FOUND AND GL_FOUND AND GLUT_Xmu_LIBRARY AND GLUT_Xi_LIBRARY)
+message("-- OpenGL, GLUT (including Xmu and Xi) and GL found, dstar_lite_gui test program will be created")
 rock_executable(dstar_lite_gui
     SOURCES dstar_lite/DStarLiteDraw.cpp 
         dstar_lite/DStarLite.cpp
@@ -29,5 +30,5 @@ rock_executable(dstar_lite_gui
     DEPS_PKGCONFIG gl base-lib
 )
 set_target_properties(dstar_lite_gui PROPERTIES COMPILE_FLAGS "-DUSE_OPEN_GL")
-endif (OPENGL_FOUND AND GLUT_FOUND AND GL_FOUND) 
+endif (OPENGL_FOUND AND GLUT_FOUND AND GL_FOUND  AND GLUT_Xmu_LIBRARY AND GLUT_Xi_LIBRARY) 
 
