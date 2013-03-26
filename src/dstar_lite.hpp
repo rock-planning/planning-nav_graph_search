@@ -62,6 +62,14 @@ class DStarLite : public TraversabilitySearch
             bool inflateMax = false);
 
     /**
+     * Allows to work with an envire traversability map directly.
+     * So, all region growing is not executed anymore and the dstar lite map is the only 
+     * internally used map.
+     */
+    DStarLite(envire::TraversabilityGrid const& envire_map, std::string const& band_name,
+            TerrainClasses const& classes);
+
+    /**
      * Deallocates the internal dstar_lite::DStarLite object.
      */
     ~DStarLite();
@@ -83,9 +91,16 @@ class DStarLite : public TraversabilitySearch
      */
     virtual double run(int goal_x, int goal_y, int start_x, int start_y);
 
+    /** Sets the traversability class to \c klass for the given cell.
+     * 
+     */
+    void setTraversability(int x, int y, int klass);
+
  private:
     dstar_lite::DStarLite* m_dstarLite;
     bool m_dstarLiteInitialized;
+
+    bool m_using_env_map_directly; // Influences the way of using setTraversability().
 
     /**
      * Initializes the dstar_lite::Dstar once.

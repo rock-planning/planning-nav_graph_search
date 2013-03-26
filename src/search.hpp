@@ -4,6 +4,8 @@
 #include <nav_graph_search/traversability_map.hpp>
 #include <nav_graph_search/grid_graph.hpp>
 
+#include <envire/maps/Grids.hpp>
+
 namespace nav_graph_search {
     /** Base class for all search algorithms implemented in this library
      *
@@ -103,6 +105,9 @@ namespace nav_graph_search {
         TraversabilitySearch(
                 TraversabilityMap& map,
                 TerrainClasses const& classes = TerrainClasses(), int robotSize = 0, bool inflateMax = false);
+
+        TraversabilitySearch(envire::TraversabilityGrid const& envire_map, std::string const& band_name,
+            TerrainClasses const& classes);
 
         /** Returns the basic cost associated with the given terrain class */
         float costOfClass(int i) const;

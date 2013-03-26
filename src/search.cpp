@@ -96,6 +96,58 @@ TraversabilitySearch::TraversabilitySearch(
     }
 }
 
+TraversabilitySearch::TraversabilitySearch(envire::TraversabilityGrid const& envire_map, 
+    std::string const& band_name,
+    TerrainClasses const& classes) :
+        Search(envire_map.getCellSizeX(), envire_map.getCellSizeY()), m_classMap(*new TraversabilityMap(0,0)) {
+
+    // Calculate size of each grid in meters.
+    envire::Environment& env = *envire_map.getEnvironment();
+    // Generate the proper local to world transform, which is based on the framenode to root, as well as the offset.
+    Eigen::Affine3d local_to_world = 
+        env.relativeTransform(envire_map.getFrameNode(), env.getRootNode()) * 
+        Eigen::Translation3d( envire_map.getOffsetX(), envire_map.getOffsetY(), 0 );
+
+    if(fabs(envire_map.getScaleX() - envire_map.getScaleY()) > 0.00001) {
+        throw std::runtime_error("Scaling of non square pixels is not supported");
+    }
+
+    //set correct scale
+    local_to_world.scale(envire_map.getScaleX());
+
+    Eigen::Matrix3d rotation, scaling;
+    local_to_world.computeScalingRotation(&scaling, &rotation);
+    float grid_size_meter = fabs(scaling(0, 0));
+
+    // Fill cost of class array.
+    if (classes.empty())
+    {
+        for (int i = 0; i < TraversabilityMap::CLASSES_COUNT; ++i)
+            m_cost_of_class[i] = TraversabilityMap::CLASSES_COUNT + 1 - i;
+    }
+    else
+    {	
+        for (int i = 0; i < TraversabilityMap::CLASSES_COUNT; ++i)
+            m_cost_of_class[i] = 1000000;
+
+        for (TerrainClasses::const_iterator it = classes.begin(); it != classes.end(); ++it)
+        {
+            float speed = it->cost;
+            if (speed == 0)
+                m_cost_of_class[it->out] = 1000000;
+            else
+                m_cost_of_class[it->out] = grid_size_meter / speed;
+
+            std::cerr << " class " << it->out << " has cost " << m_cost_of_class[it->out] << std::endl;
+        }
+    }
+
+    m_min_class_cost = *std::min_element(
+            m_cost_of_class, 
+            m_cost_of_class + TraversabilityMap::CLASSES_COUNT);
+    
+}
+
 float TraversabilitySearch::costOfClass(int i) const { return m_cost_of_class[i]; }
 
 float TraversabilitySearch::costOf(NeighbourConstIterator it) const
