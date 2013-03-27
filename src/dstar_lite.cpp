@@ -21,6 +21,7 @@ DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : needsIni
 	if(it->getCost() >= 0 && it->getCost() < 1.0)
 	    throw std::runtime_error("Error costs between 0 and <1 are not allowed");
     }
+    m_dstarLite->init(0,0,1,1);
     
 }
 
@@ -104,14 +105,6 @@ bool DStarLite::run(const Eigen::Vector3d &start, const Eigen::Vector3d &goal, c
 bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y) 
 {
     std::cout << "Planning from " << start_x << " " << start_y << " to " << goal_x << " " << goal_y << std::endl;
-    if(needsInit)
-    {
-	start = Vector2i(start_x, start_y);
-	goal = Vector2i(goal_x, goal_y);
-	m_dstarLite->init(start_x, start_y, goal_x, goal_y);
-	needsInit = false;
-	std::cout << "Dstar Init done" << std::endl;
-    }
     
     if(goal_x != goal.x() || goal_y !=  goal.y()) {
         LOG_INFO("Received new goal position (%d,%d)", goal_x, goal_y);
