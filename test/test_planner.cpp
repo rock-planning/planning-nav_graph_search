@@ -62,7 +62,7 @@ void randUpdateMap(DStarLite& dstar_lite) {
         cell_x = rand()%width;
         cell_y = rand()%height;
         new_class = rand()%TraversabilityMap::CLASSES_COUNT;
-        dstar_lite.setTraversability(cell_x, cell_y, new_class);
+        dstar_lite.updateTraversability(cell_x, cell_y, new_class);
     }
 };
 
@@ -95,21 +95,21 @@ BOOST_AUTO_TEST_CASE( dstar_lite_planner_norobotsize_noinflatemax )
 {
     // IOnly single cells are updated (not affecting the surrounding cells).
     
-    DStarLite dstar_lite(trav_map, terrain_classes, 0, false);
+    DStarLite dstar_lite(terrain_classes);
     executePlanning(dstar_lite, "norobotsize_noinflatemax");   
 }
 
 BOOST_AUTO_TEST_CASE( dstar_lite_planner_robotsize_noinflatemax )
 {
     // Uses the average cost within the footprint-/robot-size for updates.
-    DStarLite dstar_lite(trav_map, terrain_classes, 0.1 , false);
+    DStarLite dstar_lite(terrain_classes);
     executePlanning(dstar_lite, "robotsize_noinflatemax");
 }
 
 BOOST_AUTO_TEST_CASE( dstar_lite_planner_robotsize_inflatemax )
 {
     // Uses the maximal cost within the footprint-/robot-size for updates.
-    DStarLite dstar_lite(trav_map, terrain_classes, 0.1 , true);
+    DStarLite dstar_lite(terrain_classes);
     executePlanning(dstar_lite, "robotsize_inflatemax");
 }
 
