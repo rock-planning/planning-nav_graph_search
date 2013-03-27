@@ -44,7 +44,7 @@ void DStarLite::updateTraversability(int x, int y, int klass)
 void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid)
 {
     std::cout << "Got Grid" << std::endl;
-    envire::TraversabilityGrid::ArrayType &newData(newGrid->getGridData());
+    envire::TraversabilityGrid::ArrayType &newData(newGrid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
     if(!curGrid)
     {
 	std::cout << "No old grid taking new one " << std::endl;
