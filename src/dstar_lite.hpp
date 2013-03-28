@@ -71,7 +71,7 @@ class DStarLite
     /**
      * Updates the Dstar with the given map.
      * */
-    void updateTraversabilityMap(envire::TraversabilityGrid *grid);
+    void updateTraversabilityMap(envire::TraversabilityGrid* newGrid, envire::TraversabilityGrid* oldGrid);
     
     /** 
      * Updates the traversability class to \c klass for the given cell.
@@ -84,8 +84,6 @@ class DStarLite
  private:
     bool needsInit; 
      
-    envire::TraversabilityGrid *curGrid;
-    
     ///maps terrain class to cost
     std::vector<TerrainClass> costMap;
     dstar_lite::DStarLite* m_dstarLite;

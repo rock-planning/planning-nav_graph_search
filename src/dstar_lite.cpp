@@ -10,7 +10,7 @@ using namespace Eigen;
 
 namespace nav_graph_search {
 
-DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : needsInit(true), curGrid(NULL)
+DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes)
 {
     m_dstarLite = new dstar_lite::DStarLite();
     costMap.resize(std::numeric_limits< uint8_t >::max());
@@ -42,12 +42,18 @@ void DStarLite::updateTraversability(int x, int y, int klass)
 	m_dstarLite->updateCell(x + 1, y + 1, -1.0);
 }
 
-void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid)
-{
+void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid, envire::TraversabilityGrid* curGrid)
+{    
     std::cout << "Got Grid" << std::endl;
+    int updateCnt = 0;
+    envire::FrameNode *newGridFrame = newGrid->getFrameNode();
     envire::TraversabilityGrid::ArrayType &newData(newGrid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
-    if(!curGrid)
+
+    //do full update if scale changed
+    if(!curGrid || (newGrid->getScaleX() != curGrid->getScaleX()) || (newGrid->getScaleY() != curGrid->getScaleY()))
     {
+        m_dstarLite->init(0,0,1,1);
+        
 	std::cout << "No old grid taking new one " << std::endl;
 	for(size_t x = 0; x <newGrid->getCellSizeX(); x++)
 	{
@@ -55,19 +61,44 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid)
 	    {
 		//old map did not contain the data. so it MUST be new
 		updateTraversability(x, y, newData[y][x]);
+                updateCnt++;
 	    }
 	}
-	curGrid = newGrid;
-	return;
+    } 
+    else
+    {
+
+        envire::FrameNode *oldGridFrame = newGrid->getFrameNode();
+        envire::TraversabilityGrid::ArrayType &oldData(curGrid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
+        for(size_t x = 0; x <newGrid->getCellSizeX(); x++)
+        {
+            for(size_t y = 0; y <newGrid->getCellSizeY(); y++)
+            {
+                Eigen::Vector3d posWorld = newGrid->fromGrid(x, y, newGridFrame);
+                
+                size_t xOldGrid, yOldGrid;
+                
+                if(curGrid->toGrid(posWorld, xOldGrid, yOldGrid, oldGridFrame))
+                {
+                    if(newData[y][x] != oldData[yOldGrid][xOldGrid])
+                    {
+                        updateTraversability(x, y, newData[y][x]);
+                        updateCnt++;
+                    }
+                }
+                else
+                {
+                    //old map did not contain the data. so it MUST be new
+                    updateTraversability(x, y, newData[y][x]);
+                    updateCnt++;
+                }
+            }
+        }
     }
 
     if(!curGrid || (curGrid->getCellSizeX() != newGrid->getCellSizeX()) || (curGrid->getCellSizeY() != newGrid->getCellSizeY())
        || (newGrid->getScaleX() != curGrid->getScaleX()) || (newGrid->getScaleY() != curGrid->getScaleY()))
     std::cout << "Updating Grid" << std::endl;
-
-    envire::TraversabilityGrid::ArrayType &oldData(curGrid->getGridData());
-    std::cout << "Size is " << newGrid->getCellSizeX() << " " << newGrid->getCellSizeY() << std::endl;
-    for(size_t x = 0; x <newGrid->getCellSizeX(); x++)
     {
         //add non traversable border
         for(size_t x = 0; x <newGrid->getCellSizeX() + 2; x++)
@@ -75,29 +106,6 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid)
             m_dstarLite->updateCell(x, 0, -1);
             m_dstarLite->updateCell(x, newGrid->getCellSizeY() + 2, -1);
         }
-	for(size_t y = 0; y <newGrid->getCellSizeY(); y++)
-	{
-	    Eigen::Vector3d posWorld = newGrid->fromGrid(x, y);
-	    
-	    size_t xOldGrid, yOldGrid;
-	    
-	    if(curGrid->toGrid(posWorld, xOldGrid, yOldGrid))
-	    {
-		if(newData[x][y] != oldData[xOldGrid][yOldGrid])
-		{
-		    updateTraversability(x, y, newData[y][x]);
-		}
-	    }
-	    else
-	    {
-		//old map did not contain the data. so it MUST be new
-		updateTraversability(x, y, newData[y][x]);
-	    }
-	    
-	}
-    }
-    delete curGrid;
-    curGrid = newGrid;
 
         for(size_t y = 0; y <newGrid->getCellSizeY() + 2; y++)
         {
