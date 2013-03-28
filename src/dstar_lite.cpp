@@ -35,10 +35,11 @@ void DStarLite::updateTraversability(int x, int y, int klass)
     const TerrainClass &curKlass(costMap[klass]);
     if(curKlass.isTraversable())
 	//FIXME scale klass cost
-	m_dstarLite->updateCell(x, y, curKlass.getCost());
+	m_dstarLite->updateCell(x + 1, y + 1, curKlass.getCost());
+    }
     else
 	//magic value for not traversable
-	m_dstarLite->updateCell(x, y, -1.0);
+	m_dstarLite->updateCell(x + 1, y + 1, -1.0);
 }
 
 void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid)
@@ -60,12 +61,20 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid)
 	return;
     }
 
+    if(!curGrid || (curGrid->getCellSizeX() != newGrid->getCellSizeX()) || (curGrid->getCellSizeY() != newGrid->getCellSizeY())
+       || (newGrid->getScaleX() != curGrid->getScaleX()) || (newGrid->getScaleY() != curGrid->getScaleY()))
     std::cout << "Updating Grid" << std::endl;
 
     envire::TraversabilityGrid::ArrayType &oldData(curGrid->getGridData());
     std::cout << "Size is " << newGrid->getCellSizeX() << " " << newGrid->getCellSizeY() << std::endl;
     for(size_t x = 0; x <newGrid->getCellSizeX(); x++)
     {
+        //add non traversable border
+        for(size_t x = 0; x <newGrid->getCellSizeX() + 2; x++)
+        {
+            m_dstarLite->updateCell(x, 0, -1);
+            m_dstarLite->updateCell(x, newGrid->getCellSizeY() + 2, -1);
+        }
 	for(size_t y = 0; y <newGrid->getCellSizeY(); y++)
 	{
 	    Eigen::Vector3d posWorld = newGrid->fromGrid(x, y);
@@ -90,6 +99,12 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid)
     delete curGrid;
     curGrid = newGrid;
 
+        for(size_t y = 0; y <newGrid->getCellSizeY() + 2; y++)
+        {
+            m_dstarLite->updateCell(0, y, -1);
+            m_dstarLite->updateCell(newGrid->getCellSizeX() + 2, y, -1);
+        }
+    }
 }
 
 bool DStarLite::run(const Eigen::Vector3d &start, const Eigen::Vector3d &goal, const Eigen::Affine3d &fromWorld)
@@ -108,13 +123,15 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y)
     
     if(goal_x != goal.x() || goal_y !=  goal.y()) {
         LOG_INFO("Received new goal position (%d,%d)", goal_x, goal_y);
-        m_dstarLite->updateGoal(goal_x, goal_y);
-	goal = Vector2i(goal_x, goal_y);
+	//transform coordinates to allow border
+	goal = Vector2i(goal_x, goal_y) + Vector2i(1,1);
+        m_dstarLite->updateGoal(goal.x(), goal.y());
     }
 
     if(start_x != start.x() || start_y != start.y()) {
-        m_dstarLite->updateStart(start_x, start_y);
-	start = Vector2i(start_x, start_y);
+	//transform coordinates to allow border
+	start = Vector2i(start_x, start_y) + Vector2i(1,1);
+        m_dstarLite->updateStart(start.x(), start.y());
     }
 
     if(!m_dstarLite->replan()) {
@@ -134,7 +151,7 @@ vector< base::geometry::Spline< 3 > > DStarLite::getTrajectory(const Eigen::Affi
     std::vector<base::Vector3d> pathWorld;
     for(std::list<dstar_lite::state>::iterator it = path.begin(); it != path.end(); it++)
     {
-	pathWorld.push_back(toWorld * Vector3d(it->x, it->y, 0));
+	pathWorld.push_back(toWorld * Vector3d(it->x - 1, it->y - 1, 0));
     }
     
     vector< base::geometry::Spline< 3 > > ret;
@@ -151,7 +168,7 @@ std::vector<Eigen::Vector2i> DStarLite::getLocalTrajectory() const
     std::vector<Eigen::Vector2i> ret;
     for(std::list<dstar_lite::state>::iterator it = path.begin(); it != path.end(); it++)
     {
-	ret.push_back(Eigen::Vector2i(it->x, it->y));
+	ret.push_back(Eigen::Vector2i(it->x - 1, it->y - 1));
     }
     return ret;
 }
