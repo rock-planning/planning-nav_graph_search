@@ -34,12 +34,15 @@ void DStarLite::updateTraversability(int x, int y, int klass)
 {
     const TerrainClass &curKlass(costMap[klass]);
     if(curKlass.isTraversable())
+    {
 	//FIXME scale klass cost
 	m_dstarLite->updateCell(x + 1, y + 1, curKlass.getCost());
     }
     else
+    {
 	//magic value for not traversable
 	m_dstarLite->updateCell(x + 1, y + 1, -1.0);
+    }
 }
 
 void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid, envire::TraversabilityGrid* curGrid)
