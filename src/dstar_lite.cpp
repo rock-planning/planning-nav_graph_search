@@ -91,6 +91,20 @@ void DStarLite::setTraversability(int x, int y, int klass) {
     }
 }
 
+std::vector<base::Vector3d> DStarLite::getTrajectory() {
+    std::list<dstar_lite::state> path = m_dstarLite->getPath();
+    std::list<dstar_lite::state>::iterator it = path.begin();
+    std::vector<base::Vector3d> path_v;
+    base::Vector3d v;
+    v[2] = 0;
+    for(; it != path.end(); ++it) {
+        v[0] = it->x;
+        v[1] = it->y;
+        path_v.push_back(v);
+    }
+    return path_v;
+}
+
 //////////////////////////////////////// PRIVATE ////////////////////////////////////////
 void DStarLite::initializeDstarLite(int goal_x, int goal_y, int start_x, int start_y) {
     if(m_dstarLiteInitialized)

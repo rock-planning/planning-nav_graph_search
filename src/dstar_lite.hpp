@@ -95,7 +95,12 @@ class DStarLite : public TraversabilitySearch
      * 
      */
     void setTraversability(int x, int y, int klass);
-
+    
+    /**
+     * Returns the current path.
+     */
+    std::vector<base::Vector3d> getTrajectory();
+    
  private:
     dstar_lite::DStarLite* m_dstarLite;
     bool m_dstarLiteInitialized;
