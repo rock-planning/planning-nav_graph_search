@@ -6,20 +6,30 @@
 
 namespace nav_graph_search
 {
-    /** This structure is a terrain class as described in a on-disk map */
-    struct TerrainClass
-    {
+/** This structure is a terrain class as described in a on-disk map */
+struct TerrainClass
+{
 	TerrainClass() : in(0), out(0), cost(-1), margin(0)
 	{
 	}
 	
-        int in; //! The class value on disk
-        int out; //! The class value to be used in TraversabilityMap
-        float cost; //! The cost of this class
-        float margin; //! The needed geometrical margin so that to use the maximum speed
-        std::string name; //! The class name
+    int in; //! The class value on disk
+    int out; //! The class value to be used in TraversabilityMap
+    float cost; //! The cost of this class
+    float margin; //! The needed geometrical margin so that to use the maximum speed
+    std::string name; //! The class name
 
-        static std::list<TerrainClass> load(std::string const& path);
+    /**
+     * Tries to load the terrain classes from the passed file.
+     * Format: in out cost margin name
+     * # are ignored.
+     */
+    static std::list<TerrainClass> load(std::string const& path);
+    
+    /**
+     * Converts the terrain classes to a string.
+     */
+    static std::string toString(std::list<TerrainClass>);
 	
 	/**
 	 * The class number is the value that 

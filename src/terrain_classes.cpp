@@ -31,3 +31,14 @@ std::list<TerrainClass> TerrainClass::load(std::string const& path)
     return classes;
 }
 
+std::string TerrainClass::toString(std::list<TerrainClass> classes) {
+    std::stringstream ss;
+    std::list<TerrainClass>::iterator it = classes.begin();
+    ss << "Terrain classes, format: in out cost margin name" << std::endl;
+    for(; it != classes.end(); ++it) {
+        ss << it->in << " " << it->out << " " << it->cost << " " << it->margin <<
+                " " << it->name << std::endl;
+    }
+    return ss.str();
+}
+
