@@ -60,7 +60,7 @@ class DStarLite
      * Convenience function. 
      * Transforms start and goal to local coordinates and calles run();
      * */
-    bool run(const Eigen::Vector3d &start, const Eigen::Vector3d &goal, const Eigen::Affine3d &fromWorld);
+    bool run(const Eigen::Vector3d &start, const Eigen::Vector3d &goal, const Eigen::Affine3d &from_world);
     
     /**
      * Run the algorithm for the given goal and start point
@@ -76,20 +76,18 @@ class DStarLite
     /** 
      * Updates the traversability class to \c klass for the given cell.
      */
-    void updateTraversability(int x, int y, int klass);
+    void updateTraversability(int x, int y, int terrain_class);
 
     std::vector<base::geometry::Spline<3> > getTrajectory(const Eigen::Affine3d &gridToWorld) const;
     
     std::vector<Eigen::Vector2i> getLocalTrajectory() const;
- private:
-    bool needsInit; 
-     
+ private:     
     ///maps terrain class to cost
-    std::vector<TerrainClass> costMap;
-    dstar_lite::DStarLite* m_dstarLite;
+    std::map<int,TerrainClass> mCostMap;
+    dstar_lite::DStarLite* mDStarLite;
     
-    Eigen::Vector2i start;
-    Eigen::Vector2i goal;    
+    Eigen::Vector2i mStartPos;
+    Eigen::Vector2i mGoalPos;    
 };
 }
 

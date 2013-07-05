@@ -12,159 +12,162 @@ namespace nav_graph_search {
 
 DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes)
 {
-    m_dstarLite = new dstar_lite::DStarLite();
-    costMap.resize(std::numeric_limits< uint8_t >::max());
+    mDStarLite = new dstar_lite::DStarLite();
+
     for(TerrainClasses::const_iterator it = classes.begin(); it != classes.end(); it++)
     {
-	costMap[it->getNumber()] = *it;
-	//FIXME add scale
-	if(it->getCost() >= 0 && it->getCost() < 1.0)
-	    throw std::runtime_error("Error costs between 0 and <1 are not allowed");
+        mCostMap.insert(std::pair<int,TerrainClass>(it->getNumber(), *it));
+        //FIXME add scale
+        if(it->getCost() >= 0 && it->getCost() < 1.0) 
+        {
+            throw std::runtime_error("Error costs between 0 and <1 are not allowed");
+        }
     }
-    m_dstarLite->init(0,0,1,1);
-    
+    mDStarLite->init(0,0,1,1);
 }
 
 
 DStarLite::~DStarLite() {
-    delete m_dstarLite;
+    delete mDStarLite;
 }
 
-void DStarLite::updateTraversability(int x, int y, int klass)
+void DStarLite::updateTraversability(int x, int y, int terrain_class)
 {
-    const TerrainClass &curKlass(costMap[klass]);
-    if(curKlass.isTraversable())
+    std::map<int,TerrainClass>::iterator it = mCostMap.find(terrain_class);
+    if(it == mCostMap.end()) {
+        LOG_WARN("Passed terrain class %d is unknown, traversability map has not been updated!", terrain_class); 
+        return;
+    }
+    
+    if(it->second.isTraversable())
     {
-	//FIXME scale klass cost
-	m_dstarLite->updateCell(x + 1, y + 1, curKlass.getCost());
+        //FIXME scale klass cost
+        mDStarLite->updateCell(x + 1, y + 1, it->second.getCost());
     }
     else
     {
-	//magic value for not traversable
-	m_dstarLite->updateCell(x + 1, y + 1, -1.0);
+        //magic value for not traversable
+        mDStarLite->updateCell(x + 1, y + 1, -1.0);
     }
 }
 
-void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* newGrid, envire::TraversabilityGrid* curGrid)
+void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid, envire::TraversabilityGrid* last_grid)
 {    
-    std::cout << "Got Grid" << std::endl;
     int updateCnt = 0;
-    envire::FrameNode *newGridFrame = newGrid->getFrameNode();
-    envire::TraversabilityGrid::ArrayType &newData(newGrid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
-
-    //do full update if scale changed
-    if(!curGrid || (newGrid->getScaleX() != curGrid->getScaleX()) || (newGrid->getScaleY() != curGrid->getScaleY()))
+    envire::TraversabilityGrid::ArrayType &new_data(new_grid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
+    
+    // Sets the DStar-Lite map to new_grid (deletes old data).
+    if(!last_grid || (new_grid->getScaleX() != last_grid->getScaleX()) || (new_grid->getScaleY() != last_grid->getScaleY()))
     {
-        m_dstarLite->init(0,0,1,1);
-        
-	std::cout << "No old grid taking new one " << std::endl;
-	for(size_t x = 0; x <newGrid->getCellSizeX(); x++)
-	{
-	    for(size_t y = 0; y <newGrid->getCellSizeY(); y++)
+        LOG_INFO("Received new traversability map, a full update is executed");
+        mDStarLite->init(mStartPos[0], mStartPos[1], mGoalPos[0], mGoalPos[1]);
+	    for(size_t x = 0; x <new_grid->getCellSizeX(); x++)
 	    {
-		//old map did not contain the data. so it MUST be new
-		updateTraversability(x, y, newData[y][x]);
+	        for(size_t y = 0; y <new_grid->getCellSizeY(); y++)
+	        {
+                updateTraversability(x, y, new_data[y][x]);
                 updateCnt++;
+	        }
 	    }
-	}
     } 
     else
     {
-
-        envire::FrameNode *oldGridFrame = newGrid->getFrameNode();
-        envire::TraversabilityGrid::ArrayType &oldData(curGrid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
-        for(size_t x = 0; x <newGrid->getCellSizeX(); x++)
+        // Integrates the new grid into DStar-Lite.
+        // TODO Actually just 'updateTraversability(x, y, new_data[y][x])' would do the same with the same effort.
+        // TODO The pose of the received grid is not regarded, so all grids are mapped onto each other!?
+        envire::TraversabilityGrid::ArrayType& last_data(last_grid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
+        for(size_t x = 0; x <new_grid->getCellSizeX(); x++)
         {
-            for(size_t y = 0; y <newGrid->getCellSizeY(); y++)
+            for(size_t y = 0; y <new_grid->getCellSizeY(); y++)
             {
-                Eigen::Vector3d posWorld = newGrid->fromGrid(x, y, newGridFrame);
+                // Transfers the grid coordinates into the new_grid map.
+                Eigen::Vector3d point_new_grid_map = new_grid->fromGrid(x, y); 
                 
-                size_t xOldGrid, yOldGrid;
-                
-                if(curGrid->toGrid(posWorld, xOldGrid, yOldGrid, oldGridFrame))
+                size_t x_last_grid, y_last_grid;
+                // Transfers the point from the new grid map into the last grid.
+                if(last_grid->toGrid(point_new_grid_map, x_last_grid, y_last_grid, new_grid->getFrameNode()))
                 {
-                    if(newData[y][x] != oldData[yOldGrid][xOldGrid])
+                    if(new_data[y][x] != last_data[y_last_grid][x_last_grid])
                     {
-                        updateTraversability(x, y, newData[y][x]);
+                        updateTraversability(x, y, new_data[y][x]);
                         updateCnt++;
                     }
                 }
-                else
+                else // Not within the grid.
                 {
-                    //old map did not contain the data. so it MUST be new
-                    updateTraversability(x, y, newData[y][x]);
+                    // Old map did not contain the data, so it MUST be new.
+                    updateTraversability(x, y, new_data[y][x]);
                     updateCnt++;
                 }
             }
         }
     }
 
-    if(!curGrid || (curGrid->getCellSizeX() != newGrid->getCellSizeX()) || (curGrid->getCellSizeY() != newGrid->getCellSizeY())
-       || (newGrid->getScaleX() != curGrid->getScaleX()) || (newGrid->getScaleY() != curGrid->getScaleY()))
-    std::cout << "Updating Grid" << std::endl;
+    // Draws a non traversable border once or again if the grid size has changed. 
+    if(!last_grid || (last_grid->getCellSizeX() != new_grid->getCellSizeX()) || 
+            (last_grid->getCellSizeY() != new_grid->getCellSizeY()) || 
+            (new_grid->getScaleX() != last_grid->getScaleX()) || 
+            (new_grid->getScaleY() != last_grid->getScaleY()))
     {
-        //add non traversable border
-        for(size_t x = 0; x <newGrid->getCellSizeX() + 2; x++)
+        LOG_INFO("Adds a non traversable border to the grid");
+        for(size_t x = 0; x <new_grid->getCellSizeX() + 2; x++)
         {
-            m_dstarLite->updateCell(x, 0, -1);
-            m_dstarLite->updateCell(x, newGrid->getCellSizeY() + 2, -1);
+            mDStarLite->updateCell(x, 0, -1);
+            mDStarLite->updateCell(x, new_grid->getCellSizeY() + 1, -1); // No +2 here!
         }
 
-        for(size_t y = 0; y <newGrid->getCellSizeY() + 2; y++)
+        for(size_t y = 0; y <new_grid->getCellSizeY() + 2; y++)
         {
-            m_dstarLite->updateCell(0, y, -1);
-            m_dstarLite->updateCell(newGrid->getCellSizeX() + 2, y, -1);
+            mDStarLite->updateCell(0, y, -1);
+            mDStarLite->updateCell(new_grid->getCellSizeX() + 1, y, -1);
         }
     }
 }
 
-bool DStarLite::run(const Eigen::Vector3d &start, const Eigen::Vector3d &goal, const Eigen::Affine3d &fromWorld)
+bool DStarLite::run(const Eigen::Vector3d &start, const Eigen::Vector3d &goal, const Eigen::Affine3d &from_world)
 {
-    const Eigen::Vector3d startLocal = fromWorld * start;
-    const Eigen::Vector3d goalLocal = fromWorld * goal;
-    return run(goalLocal.x(), goalLocal.y(), startLocal.x(), startLocal.y());
+    const Eigen::Vector3d start_local = from_world * start;
+    const Eigen::Vector3d goal_local = from_world * goal;
+    return run(goal_local.x(), goal_local.y(), start_local.x(), start_local.y());
 }
-
-
-
 
 bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y) 
 {
     std::cout << "Planning from " << start_x << " " << start_y << " to " << goal_x << " " << goal_y << std::endl;
     
-    if(goal_x != goal.x() || goal_y !=  goal.y()) {
+    if(goal_x != mGoalPos.x() || goal_y !=  mGoalPos.y()) {
         LOG_INFO("Received new goal position (%d,%d)", goal_x, goal_y);
-	//transform coordinates to allow border
-	goal = Vector2i(goal_x, goal_y) + Vector2i(1,1);
-        m_dstarLite->updateGoal(goal.x(), goal.y());
+        // Transform coordinates to allow border.
+        mGoalPos = Vector2i(goal_x, goal_y) + Vector2i(1,1);
+        mDStarLite->updateGoal(mGoalPos.x(), mGoalPos.y());
     }
 
-    if(start_x != start.x() || start_y != start.y()) {
-	//transform coordinates to allow border
-	start = Vector2i(start_x, start_y) + Vector2i(1,1);
-        m_dstarLite->updateStart(start.x(), start.y());
+    if(start_x != mStartPos.x() || start_y != mStartPos.y()) {
+        // Transform coordinates to allow border.
+        mStartPos = Vector2i(start_x, start_y) + Vector2i(1,1);
+        mDStarLite->updateStart(mStartPos.x(), mStartPos.y());
     }
 
-    if(!m_dstarLite->replan()) {
+    if(!mDStarLite->replan()) {
         LOG_WARN("Path could not be found, goal will be reset once");
-        m_dstarLite->resetGoal();
-        if(!m_dstarLite->replan()) {
-	    return false;
+        mDStarLite->resetGoal();
+        if(!mDStarLite->replan()) {
+            return false;
         }
     }
 
     return true;
 }
 
-vector< base::geometry::Spline< 3 > > DStarLite::getTrajectory(const Eigen::Affine3d& toWorld) const
+vector< base::geometry::Spline< 3 > > DStarLite::getTrajectory(const Eigen::Affine3d& to_world) const
 {
-    std::list<dstar_lite::state> path = m_dstarLite->getPath();
+    std::list<dstar_lite::state> path = mDStarLite->getPath();
     std::vector<base::Vector3d> pathWorld;
     for(std::list<dstar_lite::state>::iterator it = path.begin(); it != path.end(); it++)
     {
-	pathWorld.push_back(toWorld * Vector3d(it->x - 1, it->y - 1, 0));
+        pathWorld.push_back(to_world * Vector3d(it->x - 1, it->y - 1, 0));
     }
-    
+
     vector< base::geometry::Spline< 3 > > ret;
     base::geometry::Spline< 3 > finalPath;
     finalPath.interpolate(pathWorld);
@@ -175,11 +178,11 @@ vector< base::geometry::Spline< 3 > > DStarLite::getTrajectory(const Eigen::Affi
 
 std::vector<Eigen::Vector2i> DStarLite::getLocalTrajectory() const
 {
-    std::list<dstar_lite::state> path = m_dstarLite->getPath();
+    std::list<dstar_lite::state> path = mDStarLite->getPath();
     std::vector<Eigen::Vector2i> ret;
     for(std::list<dstar_lite::state>::iterator it = path.begin(); it != path.end(); it++)
     {
-	ret.push_back(Eigen::Vector2i(it->x - 1, it->y - 1));
+        ret.push_back(Eigen::Vector2i(it->x - 1, it->y - 1));
     }
     return ret;
 }
