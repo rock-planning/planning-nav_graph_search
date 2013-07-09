@@ -81,6 +81,13 @@ class DStarLite
     std::vector<base::geometry::Spline<3> > getTrajectory(const Eigen::Affine3d &gridToWorld) const;
     
     std::vector<Eigen::Vector2i> getLocalTrajectory() const;
+    
+    /**
+     * Returns the cost of the cell within the DStar-Lite map (world/root frame).
+     * If the cell (x,y) has not been added yet, the cost for unknown terrain will be 
+     * returned.
+     */
+    double getCost(int x, int y);
  private:     
     ///maps terrain class to cost
     std::map<int,TerrainClass> mCostMap;

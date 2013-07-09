@@ -110,7 +110,7 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid, en
             (new_grid->getScaleY() != last_grid->getScaleY()))
     {
         LOG_INFO("Adds a non traversable border to the grid");
-        for(size_t x = 0; x <new_grid->getCellSizeX() + 2; x++)
+        for(size_t x = -1; x <new_grid->getCellSizeX() + 2; x++)
         {
             mDStarLite->updateCell(x, 0, -1);
             mDStarLite->updateCell(x, new_grid->getCellSizeY() + 1, -1); // No +2 here!
@@ -175,7 +175,6 @@ vector< base::geometry::Spline< 3 > > DStarLite::getTrajectory(const Eigen::Affi
     return ret;
 }
 
-
 std::vector<Eigen::Vector2i> DStarLite::getLocalTrajectory() const
 {
     std::list<dstar_lite::state> path = mDStarLite->getPath();
@@ -185,6 +184,20 @@ std::vector<Eigen::Vector2i> DStarLite::getLocalTrajectory() const
         ret.push_back(Eigen::Vector2i(it->x - 1, it->y - 1));
     }
     return ret;
+}
+
+double DStarLite::getCost(int x, int y) {
+    std::map<int,TerrainClass>::iterator it = mCostMap.find(0); // Unknown terrain class.
+    if(it == mCostMap.end()) {
+        LOG_ERROR("Terrain class 0 is unknown"); 
+        throw std::runtime_error("Terrain class 0 is unknown");
+    }
+    double cost_tmp;
+    if(mDStarLite->getCost(x+1, y+1, cost_tmp)) { // Regarding borders.
+        return cost_tmp;
+    } else { // Cell not available, so the cost for unknown terrain will be returned.
+        return it->second.cost;
+    }
 }
 
 } // end namespace nav_graph_search
