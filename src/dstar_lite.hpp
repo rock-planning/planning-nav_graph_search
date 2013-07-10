@@ -35,6 +35,7 @@ namespace nav_graph_search {
  * In the current version the cost values should be close to 0 (nav_graph cost map)
  * respectively close to 1 (dstar_lite cost map), otherwise the heuristic becomes useless.
  * This can be achieved by using a smaller grid size or different speed units e.g. m/minute.
+ * TODO Add statistics like 'number of replans' or 'number of failed replans'.
  */
 class DStarLite
 {
@@ -58,40 +59,53 @@ class DStarLite
 
     /**
      * Convenience function. 
-     * Transforms start and goal to local coordinates and calles run();
-     * */
-    bool run(const Eigen::Vector3d &start, const Eigen::Vector3d &goal, const Eigen::Affine3d &from_world);
+     * Transforms start and goal from map to grid using the transformations
+     * from the first received traversability grid.
+     */
+    bool run(const base::Vector3d &start_map, const base::Vector3d &goal_map);
     
     /**
-     * Run the algorithm for the given goal and start point
-     * \return If a path could be computed
+     * Run the algorithm for the given goal and start point.
+     * Points have to lie within the world grid.
      */
     bool run(int goal_x, int goal_y, int start_x, int start_y);
 
     /**
      * Updates the Dstar with the given map.
      * */
-    void updateTraversabilityMap(envire::TraversabilityGrid* newGrid, envire::TraversabilityGrid* oldGrid);
+    void updateTraversabilityMap(envire::TraversabilityGrid* newGrid);
     
     /** 
      * Updates the traversability class to \c klass for the given cell.
      */
     void updateTraversability(int x, int y, int terrain_class);
 
-    std::vector<base::geometry::Spline<3> > getTrajectory(const Eigen::Affine3d &gridToWorld) const;
-    
-    std::vector<Eigen::Vector2i> getLocalTrajectory() const;
+    /**
+     * Returns the spline in map coordinates.
+     */
+    std::vector<base::geometry::Spline<3> > getSplineMap() const;
     
     /**
-     * Returns the cost of the cell within the DStar-Lite map (world/root frame).
-     * If the cell (x,y) has not been added yet, the cost for unknown terrain will be 
-     * returned.
+     * Returns the path in grid coordinates.
      */
-    double getCost(int x, int y);
+    std::vector<Eigen::Vector2i> getTrajectoryGrid() const;
+    
+    /**
+     * Returns the path in map coordinates.
+     */
+    std::vector<base::Vector3d> getTrajectoryMap() const;
+    
+    /**
+     * Allows to request the cost of the cell within the DStar-Lite map (world/root frame).
+     * If the cell (x,y) has not been added yet false will be returned.
+     */
+    bool getCost(int x, int y, double& cost);
  private:     
-    ///maps terrain class to cost
+    /** Maps terrain class to cost. */
     std::map<int,TerrainClass> mCostMap;
     dstar_lite::DStarLite* mDStarLite;
+    /** First received trav. grid, used as the world grid. */
+    envire::TraversabilityGrid* mTravGrid;
     
     Eigen::Vector2i mStartPos;
     Eigen::Vector2i mGoalPos;    
