@@ -8,7 +8,7 @@
 namespace nav_graph_search {
 
 DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : mCostMap(), 
-        mDStarLite(NULL), mTravGrid(NULL)
+        mDStarLite(NULL), mTravGrid(NULL), mStatistics()
 {
     mDStarLite = new dstar_lite::DStarLite();
 
@@ -50,6 +50,7 @@ void DStarLite::updateTraversability(int x, int y, int terrain_class)
         // Magic value for not traversable.
         mDStarLite->updateCell(x, y, -1.0);
     }
+    mStatistics.mCellsUpdated++;
 }
 
 void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
@@ -80,12 +81,14 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
         {
             mDStarLite->updateCell(x, -1, -1);
             mDStarLite->updateCell(x, new_grid->getCellSizeY(), -1);
+            mStatistics.mCellsUpdated += 2;
         }
 
         for(size_t y = -1; y <new_grid->getCellSizeY() + 1; y++)
         {
             mDStarLite->updateCell(-1, y, -1);
             mDStarLite->updateCell(new_grid->getCellSizeX(), y, -1);
+            mStatistics.mCellsUpdated += 2;
         }
     } 
     else // Adds the received grid to the existing one.
@@ -143,12 +146,16 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y)
 
     if(!mDStarLite->replan()) {
         LOG_WARN("Path could not be found, goal will be reset once");
+        mStatistics.mFailedPlanning++; 
+        mStatistics.mOverallPlanning++;
         mDStarLite->resetGoal();
         if(!mDStarLite->replan()) {
+            mStatistics.mFailedPlanning++; 
+            mStatistics.mOverallPlanning++;
             return false;
         }
     }
-
+    mStatistics.mOverallPlanning++;
     return true;
 }
 

@@ -26,6 +26,30 @@ class DStarLite;
 
 namespace nav_graph_search {
 
+struct Statistics {
+ public:
+    unsigned int mOverallPlanning;
+    unsigned int mFailedPlanning; 
+    unsigned int mCellsUpdated;
+    
+    Statistics() : mOverallPlanning(0), mFailedPlanning(0), mCellsUpdated(0) {}
+    
+    void reset() {
+        mOverallPlanning = 0;
+        mFailedPlanning = 0; 
+        mCellsUpdated = 0; 
+    }
+    
+    std::string toString() {
+        std::stringstream ss;
+        ss << "DStar-Lite statistics" << std::endl;
+        ss << "Overall number of plannings: " << mOverallPlanning << std::endl;
+        ss << "Number of plannings failed: " << mFailedPlanning << std::endl;
+        ss << "Number of updated cells: " << mCellsUpdated << std::endl;
+        return ss.str();
+    }
+};
+
 /** 
  * Using the sources within src/dstar_lite and the class TraversabilitySearch
  * to realize DStar-Lite path planning. TraversabilitySearch is just used to 
@@ -100,15 +124,25 @@ class DStarLite
      * If the cell (x,y) has not been added yet false will be returned.
      */
     bool getCost(int x, int y, double& cost);
+    
+    inline void resetStatistics() {
+        mStatistics.reset();
+    }
+    
+    inline struct Statistics getStatistics() {
+        return mStatistics;
+    }
+    
  private:     
     /** Maps terrain class to cost. */
     std::map<int,TerrainClass> mCostMap;
     dstar_lite::DStarLite* mDStarLite;
     /** First received trav. grid, used as the world grid. */
     envire::TraversabilityGrid* mTravGrid;
+    struct Statistics mStatistics;
     
     Eigen::Vector2i mStartPos;
-    Eigen::Vector2i mGoalPos;    
+    Eigen::Vector2i mGoalPos;  
 };
 }
 
