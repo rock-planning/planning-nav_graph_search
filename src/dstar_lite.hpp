@@ -139,6 +139,7 @@ class DStarLite
     dstar_lite::DStarLite* mDStarLite;
     /** First received trav. grid, used as the world grid. */
     envire::TraversabilityGrid* mTravGrid;
+    envire::Environment mEnv;
     struct Statistics mStatistics;
     
     Eigen::Vector2i mStartPos;

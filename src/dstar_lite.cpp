@@ -8,7 +8,7 @@
 namespace nav_graph_search {
 
 DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : mCostMap(), 
-        mDStarLite(NULL), mTravGrid(NULL), mStatistics()
+        mDStarLite(NULL), mTravGrid(NULL), mEnv(), mStatistics()
 {
     mDStarLite = new dstar_lite::DStarLite();
 
@@ -28,8 +28,6 @@ DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : mCostMap
 DStarLite::~DStarLite() {
     delete mDStarLite;
     mDStarLite = NULL;
-    delete mTravGrid;
-    mTravGrid = NULL;
 }
 
 void DStarLite::updateTraversability(int x, int y, int terrain_class)
@@ -64,8 +62,16 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
 
     // First received trav grid is used as the world grid.
     if(!mTravGrid) {
-        // Update DStar-Lite map.
+
+        // Adds a copy of the received trav map and its node to mEnv.
+        // An environment is required, because getFrameNode() only works within an env.
         mTravGrid = new envire::TraversabilityGrid(*new_grid);
+        mEnv.attachItem(mTravGrid);
+        envire::FrameNode* p_fn = new envire::FrameNode(*new_grid->getFrameNode());
+        mEnv.getRootNode()->addChild(p_fn);
+        mTravGrid->setFrameNode(p_fn);
+        
+        // Update DStar-Lite map.
         LOG_INFO("Received first traversability map, a full update is executed");
         for(size_t x = 0; x <new_grid->getCellSizeX(); x++)
 	    {
@@ -91,9 +97,10 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
             mStatistics.mCellsUpdated += 2;
         }
     } 
-    else // Adds the received grid to the existing one.
+    else // Adds the received grid to the existing one. TODO Test this!
     {
         envire::FrameNode* fn_root = mTravGrid->getFrameNode();
+        
         size_t x_root = 0, y_root = 0;
         double cost = 0, new_cost = 0;
         for(size_t x_new = 0; x_new <new_grid->getCellSizeX(); x_new++)
