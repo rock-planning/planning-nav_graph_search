@@ -64,6 +64,8 @@ struct Statistics {
 class DStarLite
 {
  public:
+    enum Error {NONE, GOAL_SET_ON_OBSTACLE, NO_PATH_TO_GOAL};
+ 
     /**
      * Creates the cost map by passing the parameters to TraversabilitySearch and
      * allocates the internal dstar_lite::DStarLite object.
@@ -86,13 +88,17 @@ class DStarLite
      * Transforms start and goal from map to grid using the transformations
      * from the first received traversability grid.
      */
-    bool run(const base::Vector3d &start_map, const base::Vector3d &goal_map);
+    bool run(const base::Vector3d &start_map, const base::Vector3d &goal_map, enum Error* error=NULL);
     
     /**
      * Run the algorithm for the given goal and start point.
      * Points have to lie within the world grid.
+     * If the goal pos is placed on an obstacle or the planning failed twice (after the first 
+     * failed planning the goal position is reset once), false is returned and 'error' will be
+     * set to indicate the error. If the start position is placed on an obstacle, the obstacle
+     * will be removed.
      */
-    bool run(int goal_x, int goal_y, int start_x, int start_y);
+    bool run(int goal_x, int goal_y, int start_x, int start_y, enum Error* error=NULL);
 
     /**
      * Updates the Dstar with the given map.
@@ -125,6 +131,12 @@ class DStarLite
      */
     bool getCost(int x, int y, double& cost);
     
+    /**
+     * Allows to request the cost of the cell within the DStar-Lite map (world/root frame).
+     * If the cell (x,y) has not been added yet false will be returned.
+     */
+    bool getTerrainClass(int x, int y, int& class_);
+    
     inline void resetStatistics() {
         mStatistics.reset();
     }
@@ -133,9 +145,15 @@ class DStarLite
         return mStatistics;
     }
     
+    inline envire::TraversabilityGrid* getRootTravMap() {
+        return mTravGrid;
+    }
+    
  private:     
     /** Maps terrain class to cost. */
-    std::map<int,TerrainClass> mCostMap;
+    std::map<int,TerrainClass> mClass2CostMap;
+    /** Maps cost to terrain class. */
+    std::map<float,int> mCost2ClassMap;
     dstar_lite::DStarLite* mDStarLite;
     /** First received trav. grid, used as the world grid. */
     envire::TraversabilityGrid* mTravGrid;

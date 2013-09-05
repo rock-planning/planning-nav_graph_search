@@ -7,14 +7,15 @@
 
 namespace nav_graph_search {
 
-DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : mCostMap(), 
-        mDStarLite(NULL), mTravGrid(NULL), mEnv(), mStatistics()
+DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : mClass2CostMap(), 
+        mCost2ClassMap(), mDStarLite(NULL), mTravGrid(NULL), mEnv(), mStatistics()
 {
     mDStarLite = new dstar_lite::DStarLite();
 
     for(TerrainClasses::const_iterator it = classes.begin(); it != classes.end(); it++)
     {
-        mCostMap.insert(std::pair<int,TerrainClass>(it->getNumber(), *it));
+        mClass2CostMap.insert(std::pair<int,TerrainClass>(it->getNumber(), *it));
+        mCost2ClassMap.insert(std::pair<float,int>(it->getCost(), it->getNumber()));
         //FIXME add scale
         if(it->getCost() >= 0 && it->getCost() < 1.0) 
         {
@@ -32,22 +33,27 @@ DStarLite::~DStarLite() {
 
 void DStarLite::updateTraversability(int x, int y, int terrain_class)
 {
-    std::map<int,TerrainClass>::iterator it = mCostMap.find(terrain_class);
-    if(it == mCostMap.end()) {
+    std::map<int,TerrainClass>::iterator it = mClass2CostMap.find(terrain_class);
+    if(it == mClass2CostMap.end()) {
         LOG_WARN("Passed terrain class %d is unknown, traversability map has not been updated!", terrain_class); 
         return;
     }
     
-    if(it->second.isTraversable())
-    {
-        //FIXME scale klass cost
-        mDStarLite->updateCell(x, y, it->second.getCost());
+    double new_cost = -1; // Magic value for not traversable.
+    if(it->second.isTraversable()) {
+        new_cost = it->second.getCost(); // FIXME scale klass cost
     }
-    else
-    {
-        // Magic value for not traversable.
-        mDStarLite->updateCell(x, y, -1.0);
+    mDStarLite->updateCell(x, y, new_cost);
+    
+    // There seem to be a prpoblem during the first complete map update 
+    // (before the borders have been added) to update cell (0,0) and (1,1)
+    double current_cost = 0.0;
+    mDStarLite->getCost(x, y, current_cost);
+    if(it->second.getCost() != current_cost) {
+        LOG_WARN("The current cost %4.2f of cell (%d,%d) could not been updated with %4.2f", 
+                current_cost, x, y, new_cost);
     }
+    
     mStatistics.mCellsUpdated++;
 }
 
@@ -61,14 +67,15 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
     envire::TraversabilityGrid::ArrayType &new_data(new_grid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
 
     // First received trav grid is used as the world grid.
-    if(!mTravGrid) {
+    if(mTravGrid == NULL) {
 
         // Adds a copy of the received trav map and its node to mEnv.
         // An environment is required, because getFrameNode() only works within an env.
         mTravGrid = new envire::TraversabilityGrid(*new_grid);
-        mTravGrid->setUniqueId("trav_root_map");
+        mTravGrid->setUniqueId("root_trav_map");
         mEnv.attachItem(mTravGrid);
         envire::FrameNode* p_fn = new envire::FrameNode(*new_grid->getFrameNode());
+        p_fn->setUniqueId("root_frame_node");
         mEnv.getRootNode()->addChild(p_fn);
         mTravGrid->setFrameNode(p_fn);
         
@@ -98,20 +105,19 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
             mStatistics.mCellsUpdated += 2;
         }
     } 
-    else // Adds the received grid to the existing one. TODO Test this!
+    else // Adds the received grid to the existing one.
     {
         envire::FrameNode* fn_root = mTravGrid->getFrameNode();
         
-        // Test start
-        /*
+        // Just for testing, translate new received map
+        /*  
         envire::FrameNode* new_fn = new_grid->getFrameNode();
         envire::Transform trans = new_fn->getTransform();
-        int x = rand()%36;
-        int y = rand()%28;
+        int x = -18;//rand()%36;
+        int y = -14;//rand()%28;
         std::cout << "New grid position: " << x << ", " << y << std::endl; 
         trans.translate(base::Vector3d(x,y,0));
-        new_fn->setTransform(trans);
-        new_grid->setFrameNode(new_fn);
+        new_fn->setTransform(trans);    
         */
         // Test end
         
@@ -119,8 +125,10 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
         // map within two environments. And it has to be placed within the environment
         // to transform between this and the root map.
         envire::TraversabilityGrid* new_grid_copy = new envire::TraversabilityGrid(*new_grid);
+        new_grid_copy->setUniqueId("new_trav_map");
         mEnv.attachItem(new_grid_copy);
         envire::FrameNode* p_fn = new envire::FrameNode(*new_grid->getFrameNode());
+        p_fn->setUniqueId("new_frame_node");
         mEnv.getRootNode()->addChild(p_fn);
         new_grid_copy->setFrameNode(p_fn);
         
@@ -136,8 +144,6 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
 	            // Transfers the coordinate from the new grid to the root grid. 
 	            base::Vector3d p_root_map = new_grid_copy->fromGrid(x_new, y_new, fn_root);
 	            bool within_grid = mTravGrid->toGrid(p_root_map.x(), p_root_map.y(), x_root, y_root);
-	            //LOG_DEBUG("The position of the new grid coordinate (%d,%d) within the root frame is (%4.2f, %4.2f, %4.2f) and within the root grid is (%d,%d)", 
-	            //        x_new, y_new, p_root_map[0], p_root_map[1], p_root_map[2], x_root, y_root );
 	            if(!within_grid) {
 	                //LOG_DEBUG("New grid coordinate (%d,%d) does not lie within the root grid", x_new, y_new);
                     ++not_within_root_map_counter;
@@ -146,19 +152,19 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
 	            // Request the cost within the DStar-Lite map.
 	            if(getCost(x_root, y_root, cost)) { // Cell available.
 	                new_class = new_data[y_new][x_new];
-   	                // Convert class to cost.
-	                std::map<int,TerrainClass>::iterator it = mCostMap.find(new_class);
-	                if(it == mCostMap.end()) {
+   	                // Convert terrain class to cost.
+	                std::map<int,TerrainClass>::iterator it = mClass2CostMap.find(new_class);
+	                if(it == mClass2CostMap.end()) {
 	                    LOG_WARN("Received unknown terrain class %d", new_class);
 	                    continue;
 	                }
 	                new_cost = it->second.cost;
 	                if(cost != new_cost) {
-                        updateTraversability(x_new, y_new, new_class);
+                        updateTraversability(x_root, y_root, new_class);
                         ++update_cells;
                     }
                 } else { // Cell has not been added yet.
-                    updateTraversability(x_new, y_new, new_class);
+                    updateTraversability(x_root, y_root, new_class);
                     ++update_cells;
                 }
 	        }
@@ -170,25 +176,48 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
     }
 }
 
-bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_map)
+bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_map, enum Error* error)
 {
     size_t start_x = 0, start_y = 0, goal_x = 0, goal_y = 0;
     mTravGrid->toGrid(start_map.x(), start_map.y(), start_x, start_y);
     mTravGrid->toGrid(goal_map.x(), goal_map.y(), goal_x, goal_y);
-    return run(goal_x, goal_y, start_x, start_y);
+    return run(goal_x, goal_y, start_x, start_y, error);
 }
 
-bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y) 
+bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error* error) 
 {
     LOG_INFO("Planning from (%d,%d) to (%d,%d)", start_x, start_y, goal_x, goal_y);
+    if(error != NULL) {
+        *error = NONE;
+    }
     
+    // If the goal positionis placed on an obstacle, 'error' will be set and false will be returned.
     if(goal_x != mGoalPos.x() || goal_y !=  mGoalPos.y()) {
         LOG_INFO("Received new goal position (%d,%d)", goal_x, goal_y);
+        double cost = 0.0;
+        if(mDStarLite->getCost(goal_x, goal_y, cost)) { // The cost could be requested (cell is available).
+            if(cost < 0) { // Obstacle.
+                if(error != NULL) {
+                    *error = GOAL_SET_ON_OBSTACLE;
+                }
+                LOG_WARN("New goal position has been placed on an obstacle, no planning will be exceuted");
+                return false;
+            }
+        }
+        
         mGoalPos = Eigen::Vector2i(goal_x, goal_y);
         mDStarLite->updateGoal(mGoalPos.x(), mGoalPos.y());
     }
 
+    // If the start position is placed on an obstacle, the obstacle will be removed.
     if(start_x != mStartPos.x() || start_y != mStartPos.y()) {
+        double cost = 0.0;
+        if(mDStarLite->getCost(start_x, start_y, cost)) { // The cost could be requested (cell is available).
+            if(cost < 0) { // Obstacle.
+                LOG_WARN("The start position (%d,%d) has been placed on an obstacle. The obstacle will be removed.");
+            }
+        }
+    
         mStartPos = Eigen::Vector2i(start_x, start_y);
         mDStarLite->updateStart(mStartPos.x(), mStartPos.y());
     }
@@ -201,6 +230,9 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y)
         if(!mDStarLite->replan()) {
             mStatistics.mFailedPlanning++; 
             mStatistics.mOverallPlanning++;
+            if(error != NULL) {
+                *error = NO_PATH_TO_GOAL;
+            }
             return false;
         }
     }
@@ -249,10 +281,26 @@ std::vector<base::Vector3d> DStarLite::getTrajectoryMap() const
 }
 
 bool DStarLite::getCost(int x, int y, double& cost) {
-    double cost_tmp;
+    double cost_tmp = 0.0;
     if(mDStarLite->getCost(x, y, cost_tmp)) {
         cost = cost_tmp;
         return true;
+    } else { // Cell not available yet.
+        return false;
+    }
+}
+
+bool DStarLite::getTerrainClass(int x, int y, int& class_) {
+    double cost_tmp = 0.0;
+    if(mDStarLite->getCost(x, y, cost_tmp)) {
+        std::map<float,int>::iterator it = mCost2ClassMap.find(cost_tmp);
+        if(it == mCost2ClassMap.end()) {
+            LOG_WARN("Mapping of cost %4.2f to terrain-class is not available", cost_tmp);
+            return false;
+        } else {
+            class_ = it->second;
+            return true;
+        }
     } else { // Cell not available yet.
         return false;
     }
