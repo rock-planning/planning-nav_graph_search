@@ -8,7 +8,8 @@
 namespace nav_graph_search {
 
 DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : mClass2CostMap(), 
-        mCost2ClassMap(), mDStarLite(NULL), mTravGrid(NULL), mEnv(), mStatistics()
+        mCost2ClassMap(), mDStarLite(NULL), mTravGrid(NULL), mEnv(), mStatistics(),
+        mNewTravGrid(NULL), mNewTravFrameNode(NULL)
 {
     mDStarLite = new dstar_lite::DStarLite();
 
@@ -121,28 +122,34 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
         */
         // Test end
         
-        // The map has to be copied because it is not possible to contain the same
-        // map within two environments. And it has to be placed within the environment
-        // to transform between this and the root map.
-        envire::TraversabilityGrid* new_grid_copy = new envire::TraversabilityGrid(*new_grid);
-        new_grid_copy->setUniqueId("new_trav_map");
-        mEnv.attachItem(new_grid_copy);
-        envire::FrameNode* p_fn = new envire::FrameNode(*new_grid->getFrameNode());
-        p_fn->setUniqueId("new_frame_node");
-        mEnv.getRootNode()->addChild(p_fn);
-        new_grid_copy->setFrameNode(p_fn);
+        // Attach the map to the environment to calculate the transformation. 
+        if(mNewTravGrid != NULL) {
+            mEnv.detachItem(mNewTravGrid);
+        }
+        //mNewTravGrid->operator=( *new_grid ); // vorher 
+        
+        mNewTravGrid = new envire::TraversabilityGrid(*new_grid);
+        mNewTravGrid->setUniqueId("new_trav_map");
+        mEnv.attachItem(mNewTravGrid);
+        
+        if(mNewTravFrameNode == NULL) {
+            mNewTravFrameNode = new envire::FrameNode(*new_grid->getFrameNode());
+            mNewTravFrameNode->setUniqueId("new_frame_node");
+            mEnv.getRootNode()->addChild(mNewTravFrameNode);
+        }
+        mNewTravGrid->setFrameNode(mNewTravFrameNode);   
         
         size_t x_root = 0, y_root = 0;
         int new_class = 0;
         double cost = 0, new_cost = 0;
         int not_within_root_map_counter = 0;
         int update_cells = 0;
-        for(size_t x_new = 0; x_new <new_grid_copy->getCellSizeX(); x_new++)
+        for(size_t x_new = 0; x_new < mNewTravGrid->getCellSizeX(); x_new++)
 	    {
-	        for(size_t y_new = 0; y_new <new_grid_copy->getCellSizeY(); y_new++)
+	        for(size_t y_new = 0; y_new < mNewTravGrid->getCellSizeY(); y_new++)
 	        {
 	            // Transfers the coordinate from the new grid to the root grid. 
-	            base::Vector3d p_root_map = new_grid_copy->fromGrid(x_new, y_new, fn_root);
+	            base::Vector3d p_root_map = mNewTravGrid->fromGrid(x_new, y_new, fn_root);
 	            bool within_grid = mTravGrid->toGrid(p_root_map.x(), p_root_map.y(), x_root, y_root);
 	            if(!within_grid) {
 	                //LOG_DEBUG("New grid coordinate (%d,%d) does not lie within the root grid", x_new, y_new);
@@ -169,7 +176,7 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
                 }
 	        }
 	    }
-	    double num_cells = new_grid_copy->getCellSizeX() * new_grid_copy->getCellSizeY();
+	    double num_cells = mNewTravGrid->getCellSizeX() * mNewTravGrid->getCellSizeY();
 	    LOG_INFO("%d (%4.2f \%) cells of the new grid have been positioned outside of the root grid", 
 	            not_within_root_map_counter, 100 * not_within_root_map_counter / num_cells);
 	    LOG_INFO("%d (%4.2f \%) have been updated", update_cells, 100 * update_cells / num_cells);

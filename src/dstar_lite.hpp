@@ -64,7 +64,7 @@ struct Statistics {
 class DStarLite
 {
  public:
-    enum Error {NONE, GOAL_SET_ON_OBSTACLE, NO_PATH_TO_GOAL};
+    enum Error {NONE, GOAL_SET_ON_OBSTACLE, OBSTACLE_SET_ON_GOAL, NO_PATH_TO_GOAL};
  
     /**
      * Creates the cost map by passing the parameters to TraversabilitySearch and
@@ -159,6 +159,9 @@ class DStarLite
     envire::TraversabilityGrid* mTravGrid;
     envire::Environment mEnv;
     struct Statistics mStatistics;
+    /** To be able to detach the new grid during each map update. */
+    envire::TraversabilityGrid* mNewTravGrid;
+    envire::FrameNode* mNewTravFrameNode;
     
     Eigen::Vector2i mStartPos;
     Eigen::Vector2i mGoalPos;  
