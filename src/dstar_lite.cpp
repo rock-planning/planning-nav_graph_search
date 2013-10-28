@@ -68,119 +68,124 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
     envire::TraversabilityGrid::ArrayType &new_data(new_grid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
 
     // First received trav grid is used as the world grid.
-    if(mTravGrid == NULL) {
-
-        // Adds a copy of the received trav map and its node to mEnv.
-        // An environment is required, because getFrameNode() only works within an env.
-        mTravGrid = new envire::TraversabilityGrid(*new_grid);
-        mTravGrid->setUniqueId("root_trav_map");
-        mEnv.attachItem(mTravGrid);
-        envire::FrameNode* p_fn = new envire::FrameNode(*new_grid->getFrameNode());
-        p_fn->setUniqueId("root_frame_node");
-        mEnv.getRootNode()->addChild(p_fn);
-        mTravGrid->setFrameNode(p_fn);
-        
-        // Update DStar-Lite map.
-        LOG_INFO("Received first traversability map, a full update is executed");
-        for(size_t x = 0; x <new_grid->getCellSizeX(); x++)
-	    {
-	        for(size_t y = 0; y <new_grid->getCellSizeY(); y++)
-	        {
-                updateTraversability(x, y, new_data[y][x]);
-	        }
-	    }
-	    
-	    // Draw border.
-	    LOG_INFO("Adds a non traversable border around the grid");
-        for(size_t x = -1; x <new_grid->getCellSizeX() + 1; x++)
-        {
-            mDStarLite->updateCell(x, -1, -1);
-            mDStarLite->updateCell(x, new_grid->getCellSizeY(), -1);
-            mStatistics.mCellsUpdated += 2;
-        }
-
-        for(size_t y = -1; y <new_grid->getCellSizeY() + 1; y++)
-        {
-            mDStarLite->updateCell(-1, y, -1);
-            mDStarLite->updateCell(new_grid->getCellSizeX(), y, -1);
-            mStatistics.mCellsUpdated += 2;
-        }
-    } 
-    else // Adds the received grid to the existing one.
-    {
-        envire::FrameNode* fn_root = mTravGrid->getFrameNode();
-        
-        // Just for testing, translate new received map
-        /*  
-        envire::FrameNode* new_fn = new_grid->getFrameNode();
-        envire::Transform trans = new_fn->getTransform();
-        int x = -18;//rand()%36;
-        int y = -14;//rand()%28;
-        std::cout << "New grid position: " << x << ", " << y << std::endl; 
-        trans.translate(base::Vector3d(x,y,0));
-        new_fn->setTransform(trans);    
-        */
-        // Test end
-        
-        // Attach the map to the environment to calculate the transformation. 
-        if(mNewTravGrid != NULL) {
-            mEnv.detachItem(mNewTravGrid);
-        }
-        //mNewTravGrid->operator=( *new_grid ); // vorher 
-        
-        mNewTravGrid = new envire::TraversabilityGrid(*new_grid);
-        mNewTravGrid->setUniqueId("new_trav_map");
-        mEnv.attachItem(mNewTravGrid);
-        
-        if(mNewTravFrameNode == NULL) {
-            mNewTravFrameNode = new envire::FrameNode(*new_grid->getFrameNode());
-            mNewTravFrameNode->setUniqueId("new_frame_node");
-            mEnv.getRootNode()->addChild(mNewTravFrameNode);
-        }
-        mNewTravGrid->setFrameNode(mNewTravFrameNode);   
-        
-        size_t x_root = 0, y_root = 0;
-        int new_class = 0;
-        double cost = 0, new_cost = 0;
-        int not_within_root_map_counter = 0;
-        int update_cells = 0;
-        for(size_t x_new = 0; x_new < mNewTravGrid->getCellSizeX(); x_new++)
-	    {
-	        for(size_t y_new = 0; y_new < mNewTravGrid->getCellSizeY(); y_new++)
-	        {
-	            // Transfers the coordinate from the new grid to the root grid. 
-	            base::Vector3d p_root_map = mNewTravGrid->fromGrid(x_new, y_new, fn_root);
-	            bool within_grid = mTravGrid->toGrid(p_root_map.x(), p_root_map.y(), x_root, y_root);
-	            if(!within_grid) {
-	                //LOG_DEBUG("New grid coordinate (%d,%d) does not lie within the root grid", x_new, y_new);
-                    ++not_within_root_map_counter;
-	                continue;
-	            }
-	            // Request the cost within the DStar-Lite map.
-	            if(getCost(x_root, y_root, cost)) { // Cell available.
-	                new_class = new_data[y_new][x_new];
-   	                // Convert terrain class to cost.
-	                std::map<int,TerrainClass>::iterator it = mClass2CostMap.find(new_class);
-	                if(it == mClass2CostMap.end()) {
-	                    LOG_WARN("Received unknown terrain class %d", new_class);
-	                    continue;
-	                }
-	                new_cost = it->second.cost;
-	                if(cost != new_cost) {
-                        updateTraversability(x_root, y_root, new_class);
-                        ++update_cells;
-                    }
-                } else { // Cell has not been added yet.
-                    updateTraversability(x_root, y_root, new_class);
-                    ++update_cells;
-                }
-	        }
-	    }
-	    double num_cells = mNewTravGrid->getCellSizeX() * mNewTravGrid->getCellSizeY();
-	    LOG_INFO("%d (%4.2f \%) cells of the new grid have been positioned outside of the root grid", 
-	            not_within_root_map_counter, 100 * not_within_root_map_counter / num_cells);
-	    LOG_INFO("%d (%4.2f \%) have been updated", update_cells, 100 * update_cells / num_cells);
+    if(mTravGrid != NULL) {
+        mEnv.detachItem(mTravGrid->getFrameNode());
+        mEnv.detachItem(mTravGrid);
     }
+
+    // Adds a copy of the received trav map and its node to mEnv.
+    // An environment is required, because getFrameNode() only works within an env.
+    mTravGrid = new envire::TraversabilityGrid(*new_grid);
+    mTravGrid->setUniqueId("root_trav_map");
+    mEnv.attachItem(mTravGrid);
+    envire::FrameNode* p_fn = new envire::FrameNode(*new_grid->getFrameNode());
+    p_fn->setUniqueId("root_frame_node");
+    mEnv.getRootNode()->addChild(p_fn);
+    mTravGrid->setFrameNode(p_fn);
+    
+    // Update DStar-Lite map.
+    LOG_INFO("Received first traversability map, a full update is executed");
+    for(size_t x = 0; x <new_grid->getCellSizeX(); x++)
+    {
+        for(size_t y = 0; y <new_grid->getCellSizeY(); y++)
+        {
+            updateTraversability(x, y, new_data[y][x]);
+        }
+    }
+    
+    
+//     else // Adds the received grid to the existing one.
+//     {
+//         envire::FrameNode* fn_root = mTravGrid->getFrameNode();
+//         
+//         // Just for testing, translate new received map
+//         /*  
+//         envire::FrameNode* new_fn = new_grid->getFrameNode();
+//         envire::Transform trans = new_fn->getTransform();
+//         int x = -18;//rand()%36;
+//         int y = -14;//rand()%28;
+//         std::cout << "New grid position: " << x << ", " << y << std::endl; 
+//         trans.translate(base::Vector3d(x,y,0));
+//         new_fn->setTransform(trans);    
+//         */
+//         // Test end
+//         
+//         // Attach the map to the environment to calculate the transformation. 
+//         if(mNewTravGrid != NULL) {
+//             mEnv.detachItem(mNewTravGrid);
+//         }
+//         //mNewTravGrid->operator=( *new_grid ); // vorher 
+//         
+//         mNewTravGrid = new envire::TraversabilityGrid(*new_grid);
+//         mNewTravGrid->setUniqueId("new_trav_map");
+//         mEnv.attachItem(mNewTravGrid);
+//         
+//         if(mNewTravFrameNode == NULL) {
+//             mNewTravFrameNode = new envire::FrameNode(*new_grid->getFrameNode());
+//             mNewTravFrameNode->setUniqueId("new_frame_node");
+//             mEnv.getRootNode()->addChild(mNewTravFrameNode);
+//         }
+//         mNewTravGrid->setFrameNode(mNewTravFrameNode);   
+//         
+//         size_t x_root = 0, y_root = 0;
+//         int new_class = 0;
+//         double cost = 0, new_cost = 0;
+//         int not_within_root_map_counter = 0;
+//         int update_cells = 0;
+//         for(size_t x_new = 0; x_new < mNewTravGrid->getCellSizeX(); x_new++)
+// 	    {
+// 	        for(size_t y_new = 0; y_new < mNewTravGrid->getCellSizeY(); y_new++)
+// 	        {
+// 	            // Transfers the coordinate from the new grid to the root grid. 
+// 	            base::Vector3d p_root_map = mNewTravGrid->fromGrid(x_new, y_new, fn_root);
+// 	            bool within_grid = mTravGrid->toGrid(p_root_map.x(), p_root_map.y(), x_root, y_root);
+// 	            if(!within_grid) {
+// 	                //LOG_DEBUG("New grid coordinate (%d,%d) does not lie within the root grid", x_new, y_new);
+//                     ++not_within_root_map_counter;
+// 	                continue;
+// 	            }
+// 	            // Request the cost within the DStar-Lite map.
+// 	            if(getCost(x_root, y_root, cost)) { // Cell available.
+// 	                new_class = new_data[y_new][x_new];
+//    	                // Convert terrain class to cost.
+// 	                std::map<int,TerrainClass>::iterator it = mClass2CostMap.find(new_class);
+// 	                if(it == mClass2CostMap.end()) {
+// 	                    LOG_WARN("Received unknown terrain class %d", new_class);
+// 	                    continue;
+// 	                }
+// 	                new_cost = it->second.cost;
+// 	                if(cost != new_cost) {
+//                         updateTraversability(x_root, y_root, new_class);
+//                         ++update_cells;
+//                     }
+//                 } else { // Cell has not been added yet.
+//                     updateTraversability(x_root, y_root, new_class);
+//                     ++update_cells;
+//                 }
+// 	        }
+// 	    }
+// 	    double num_cells = mNewTravGrid->getCellSizeX() * mNewTravGrid->getCellSizeY();
+// 	    LOG_INFO("%d (%4.2f \%) cells of the new grid have been positioned outside of the root grid", 
+// 	            not_within_root_map_counter, 100 * not_within_root_map_counter / num_cells);
+// 	    LOG_INFO("%d (%4.2f \%) have been updated", update_cells, 100 * update_cells / num_cells);
+//     }
+    
+    // Draw border.
+    LOG_INFO("Adds a non traversable border around the grid");
+    for(size_t x = -1; x <mTravGrid->getCellSizeX() + 1; x++)
+    {
+        mDStarLite->updateCell(x, -1, -1);
+        mDStarLite->updateCell(x, mTravGrid->getCellSizeY(), -1);
+        mStatistics.mCellsUpdated += 2;
+    }
+
+    for(size_t y = -1; y <mTravGrid->getCellSizeY() + 1; y++)
+    {
+        mDStarLite->updateCell(-1, y, -1);
+        mDStarLite->updateCell(mTravGrid->getCellSizeX(), y, -1);
+        mStatistics.mCellsUpdated += 2;
+    }
+    
 }
 
 bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_map, enum Error* error)
