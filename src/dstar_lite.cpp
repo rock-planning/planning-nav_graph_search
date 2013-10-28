@@ -186,8 +186,20 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
 bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_map, enum Error* error)
 {
     size_t start_x = 0, start_y = 0, goal_x = 0, goal_y = 0;
-    mTravGrid->toGrid(start_map.x(), start_map.y(), start_x, start_y);
-    mTravGrid->toGrid(goal_map.x(), goal_map.y(), goal_x, goal_y);
+    if(!mTravGrid->toGrid(start_map.x(), start_map.y(), start_x, start_y))
+    {
+        std::cout << "Error start pos is out of grid" <<std::endl;
+        return false;
+    }
+    if(!mTravGrid->toGrid(goal_map.x(), goal_map.y(), goal_x, goal_y))
+    {
+        std::cout << "Error goal pos is out of grid" <<std::endl;
+        return false;
+    }
+    
+    std::cout << "Planning from " << start_map.x() << " " << start_map.y() << " to " << goal_map.x() << " " << goal_map.y() << std::endl;
+    std::cout << "In map coordinates " << start_x << " " << start_y << " to " << goal_x << " " << goal_y << std::endl;
+    
     return run(goal_x, goal_y, start_x, start_y, error);
 }
 
@@ -254,6 +266,9 @@ std::vector< base::geometry::Spline< 3 > > DStarLite::getSplineMap() const
     double x_world = 0.0, y_world = 0.0;
     for(std::list<dstar_lite::state>::iterator it = path.begin(); it != path.end(); it++)
     {
+        if(!mTravGrid->contains(envire::GridBase::Position(x_world, y_world)))
+            throw std::runtime_error("Got path that is out of map");
+
         mTravGrid->fromGrid(it->x, it->y, x_world, y_world);
         pathWorld.push_back(base::Vector3d(x_world, y_world, 0));
     }
