@@ -9,7 +9,7 @@ namespace nav_graph_search {
 
 DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : mClass2CostMap(), 
         mCost2ClassMap(), mDStarLite(NULL), mTravGrid(NULL), mEnv(), mStatistics(),
-        mNewTravGrid(NULL), mNewTravFrameNode(NULL)
+        mNewTravGrid(NULL), mNewTravFrameNode(NULL), mRemoveObstaclesRadius(0.0)
 {
     mDStarLite = new dstar_lite::DStarLite();
 
@@ -244,6 +244,51 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error
     
         mStartPos = Eigen::Vector2i(start_x, start_y);
         mDStarLite->updateStart(mStartPos.x(), mStartPos.y());
+    }
+
+    // Removes obstacles around the robot.
+    if(mRemoveObstaclesRadius > 0 && mTravGrid  != NULL) {
+        // Convert radius to grid cells, assuming scaleX == scaleY.
+        int radius_cells = mRemoveObstaclesRadius * mTravGrid->getScaleX();
+        int left_x = start_x - radius_cells, right_x = start_x + radius_cells;
+        int top_y = start_y - radius_cells, bottom_y = start_y + start_y;
+        if(left_x < 0)
+            left_x = 0;
+        if(right_x > (int)mTravGrid->getCellSizeX() - 1)
+            right_x = (int)mTravGrid->getCellSizeX() - 1;
+        if(top_y < 0)
+            top_y = 0;
+        if(bottom_y > (int)mTravGrid->getCellSizeY() - 1)
+            bottom_y = (int)mTravGrid->getCellSizeY() - 1;
+
+        // Remove all obstacles within the choosen radius.
+        int distance_cells = 0;
+        double cost = 0.0;
+        int counter_removed_obstacles = 0;
+        int counter_patches_no_cost = 0;
+        int counter_patches = 0;
+        bool ret;
+        for(int x = left_x; x < right_x; ++x) {
+            for(int y = top_y; y < bottom_y; ++y) {
+                distance_cells = sqrt((start_x - x) * (start_x - x) + (start_y - y) * (start_y - y)); 
+                if(distance_cells < radius_cells) {
+                    counter_patches++;
+                    cost = -1.0;
+                    ret = mDStarLite->getCost(x, y, cost);
+                    if(!ret) { // Patches not yet available.
+                        counter_patches_no_cost++;
+                    }
+                    if(ret && cost == -1) { // Obstacle found.
+                        counter_removed_obstacles++;
+                    }
+                    if(cost < 0) { // Obstacle or not yet available.
+                        updateTraversability(x,y,12); // WARN Using fix class value here.
+                    }
+                }                   
+            }
+        } 
+        LOG_INFO("%d patches within %4.2f m (%d grids) of the robot position (%d, %d)", counter_patches, mRemoveObstaclesRadius, radius_cells, start_x, start_y);
+        LOG_INFO("%d obstacles removed, %d new patches created", counter_removed_obstacles, counter_patches_no_cost);
     }
 
     if(!mDStarLite->replan()) {

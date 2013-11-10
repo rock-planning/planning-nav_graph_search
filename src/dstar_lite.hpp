@@ -64,7 +64,12 @@ struct Statistics {
 class DStarLite
 {
  public:
-    enum Error {NONE, GOAL_SET_ON_OBSTACLE, OBSTACLE_SET_ON_GOAL, NO_PATH_TO_GOAL};
+    enum Error {NONE, 
+            GOAL_SET_ON_OBSTACLE, 
+            OBSTACLE_SET_ON_GOAL, 
+            NO_PATH_TO_GOAL,
+            GOAL_OUT_OF_GRID,
+            START_OUT_OF_GRID};
  
     /**
      * Creates the cost map by passing the parameters to TraversabilitySearch and
@@ -148,6 +153,11 @@ class DStarLite
     inline envire::TraversabilityGrid* getRootTravMap() {
         return mTravGrid;
     }
+
+    inline void setRemoveObstaclesRadius(double radius) {
+        mRemoveObstaclesRadius = radius;
+    }
+  
     
  private:     
     /** Maps terrain class to cost. */
@@ -165,6 +175,7 @@ class DStarLite
     
     Eigen::Vector2i mStartPos;
     Eigen::Vector2i mGoalPos;  
+    double mRemoveObstaclesRadius;
 };
 }
 
