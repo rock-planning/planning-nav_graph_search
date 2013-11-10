@@ -36,7 +36,7 @@ void DStarLite::updateTraversability(int x, int y, int terrain_class)
 {
     std::map<int,TerrainClass>::iterator it = mClass2CostMap.find(terrain_class);
     if(it == mClass2CostMap.end()) {
-        LOG_WARN("Passed terrain class %d is unknown, traversability map has not been updated!", terrain_class); 
+        LOG_WARN("DStarLite: Passed terrain class %d is unknown, traversability map has not been updated!", terrain_class); 
         return;
     }
     
@@ -51,7 +51,7 @@ void DStarLite::updateTraversability(int x, int y, int terrain_class)
     double current_cost = 0.0;
     mDStarLite->getCost(x, y, current_cost);
     if(it->second.getCost() != current_cost) {
-        LOG_WARN("The current cost %4.2f of cell (%d,%d) could not been updated with %4.2f", 
+        LOG_WARN("DStarLite: The current cost %4.2f of cell (%d,%d) could not been updated with %4.2f", 
                 current_cost, x, y, new_cost);
     }
     
@@ -61,7 +61,7 @@ void DStarLite::updateTraversability(int x, int y, int terrain_class)
 void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
 {   
     if(!new_grid) {
-        LOG_WARN("Received NULL pointer instead of a traversability map");
+        LOG_WARN("DStarLite: Received NULL pointer instead of a traversability map");
         return;
     }
 
@@ -84,7 +84,7 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
     mTravGrid->setFrameNode(p_fn);
     
     // Update DStar-Lite map.
-    LOG_INFO("Received first traversability map, a full update is executed");
+    LOG_INFO("DStarLite: Received first traversability map, a full update is executed");
     for(size_t x = 0; x <new_grid->getCellSizeX(); x++)
     {
         for(size_t y = 0; y <new_grid->getCellSizeY(); y++)
@@ -171,7 +171,7 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
 //     }
     
     // Draw border.
-    LOG_INFO("Adds a non traversable border around the grid");
+    LOG_INFO("DStarLite: Adds a non traversable border around the grid");
     for(size_t x = -1; x <mTravGrid->getCellSizeX() + 1; x++)
     {
         mDStarLite->updateCell(x, -1, -1);
@@ -193,38 +193,35 @@ bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_
     size_t start_x = 0, start_y = 0, goal_x = 0, goal_y = 0;
     if(!mTravGrid->toGrid(start_map.x(), start_map.y(), start_x, start_y))
     {
-        std::cout << "Error start pos is out of grid" <<std::endl;
+        LOG_ERROR("DStarLite: Error start pos is out of grid");
         return false;
     }
     if(!mTravGrid->toGrid(goal_map.x(), goal_map.y(), goal_x, goal_y))
     {
-        std::cout << "Error goal pos is out of grid" <<std::endl;
+        LOG_ERROR("DStarLite: Error goal pos is out of grid");
         return false;
     }
-    
-    std::cout << "Planning from " << start_map.x() << " " << start_map.y() << " to " << goal_map.x() << " " << goal_map.y() << std::endl;
-    std::cout << "In map coordinates " << start_x << " " << start_y << " to " << goal_x << " " << goal_y << std::endl;
     
     return run(goal_x, goal_y, start_x, start_y, error);
 }
 
 bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error* error) 
 {
-    LOG_INFO("Planning from (%d,%d) to (%d,%d)", start_x, start_y, goal_x, goal_y);
+    LOG_INFO("DStarLite: Planning from (%d,%d) to (%d,%d)", start_x, start_y, goal_x, goal_y);
     if(error != NULL) {
         *error = NONE;
     }
     
     // If the goal positionis placed on an obstacle, 'error' will be set and false will be returned.
     if(goal_x != mGoalPos.x() || goal_y !=  mGoalPos.y()) {
-        LOG_INFO("Received new goal position (%d,%d)", goal_x, goal_y);
+        LOG_INFO("DStarLite: Received new goal position (%d,%d)", goal_x, goal_y);
         double cost = 0.0;
         if(mDStarLite->getCost(goal_x, goal_y, cost)) { // The cost could be requested (cell is available).
             if(cost < 0) { // Obstacle.
                 if(error != NULL) {
                     *error = GOAL_SET_ON_OBSTACLE;
                 }
-                LOG_WARN("New goal position has been placed on an obstacle, no planning will be exceuted");
+                LOG_WARN("DStarLite: New goal position has been placed on an obstacle, no planning will be exceuted");
                 return false;
             }
         }
@@ -238,7 +235,7 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error
         double cost = 0.0;
         if(mDStarLite->getCost(start_x, start_y, cost)) { // The cost could be requested (cell is available).
             if(cost < 0) { // Obstacle.
-                LOG_WARN("The start position (%d,%d) has been placed on an obstacle. The obstacle will be removed.");
+                LOG_WARN("DStarLite: The start position (%d,%d) has been placed on an obstacle. The obstacle will be removed.");
             }
         }
     
@@ -287,12 +284,12 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error
                 }                   
             }
         } 
-        LOG_INFO("%d patches within %4.2f m (%d grids) of the robot position (%d, %d)", counter_patches, mRemoveObstaclesRadius, radius_cells, start_x, start_y);
-        LOG_INFO("%d obstacles removed, %d new patches created", counter_removed_obstacles, counter_patches_no_cost);
+        LOG_INFO("DStarLite: %d patches within %4.2f m (%d grids) of the robot position (%d, %d)", counter_patches, mRemoveObstaclesRadius, radius_cells, start_x, start_y);
+        LOG_INFO("DStarLite: %d obstacles removed, %d new patches created", counter_removed_obstacles, counter_patches_no_cost);
     }
 
     if(!mDStarLite->replan()) {
-        LOG_WARN("Path could not be found, goal will be reset once");
+        LOG_WARN("DStarLite: Path could not be found, goal will be reset once");
         mStatistics.mFailedPlanning++; 
         mStatistics.mOverallPlanning++;
         mDStarLite->resetGoal();
@@ -367,7 +364,7 @@ bool DStarLite::getTerrainClass(int x, int y, int& class_) {
     if(mDStarLite->getCost(x, y, cost_tmp)) {
         std::map<float,int>::iterator it = mCost2ClassMap.find(cost_tmp);
         if(it == mCost2ClassMap.end()) {
-            LOG_WARN("Mapping of cost %4.2f to terrain-class is not available", cost_tmp);
+            LOG_WARN("DStarLite: Mapping of cost %4.2f to terrain-class is not available", cost_tmp);
             return false;
         } else {
             class_ = it->second;
