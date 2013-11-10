@@ -197,12 +197,12 @@ bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_
     goal_world.z() = 0;
     
     size_t start_x = 0, start_y = 0, goal_x = 0, goal_y = 0;
-    if(!mTravGrid->toGrid(start_world, start_x, start_y, mTravGrid->getFrameNode()))
+    if(!mTravGrid->toGrid(start_world, start_x, start_y, mTravGrid->getEnvironment()->getRootNode()))
     {
         LOG_ERROR("DStarLite: Error start pos is out of grid");
         return false;
     }
-    if(!mTravGrid->toGrid(goal_world, goal_x, goal_y, mTravGrid->getFrameNode()))
+    if(!mTravGrid->toGrid(goal_world, goal_x, goal_y, mTravGrid->->getEnvironment()->getRootNode()))
     {
         LOG_ERROR("DStarLite: Error goal pos is out of grid");
         return false;
@@ -350,7 +350,7 @@ std::vector<base::Vector3d> DStarLite::getTrajectoryMap() const
     std::vector<base::Vector3d> ret;
     for(std::list<dstar_lite::state>::iterator it = path.begin(); it != path.end(); it++)
     {
-        ret.push_back(mTravGrid->fromGrid(it->x, it->y, mTravGrid->getFrameNode()));
+        ret.push_back(mTravGrid->fromGrid(it->x, it->y, mTravGrid->getEnvironment()->getRootNode()));
     }
     return ret;
 }
@@ -370,7 +370,7 @@ bool DStarLite::getCostWorld(double x, double y, double& cost)
     size_t x_local;
     size_t y_local;
     Eigen::Vector3d pos(x, y, 0);
-    if(!mTravGrid->toGrid(pos, x_local, y_local, mTravGrid->getFrameNode()))
+    if(!mTravGrid->toGrid(pos, x_local, y_local, mTravGrid->getEnvironment()->getRootNode()))
     {
         return false;
     }
