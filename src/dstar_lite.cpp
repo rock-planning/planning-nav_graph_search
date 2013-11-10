@@ -202,7 +202,7 @@ bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_
         LOG_ERROR("DStarLite: Error start pos is out of grid");
         return false;
     }
-    if(!mTravGrid->toGrid(goal_world, goal_x, goal_y, mTravGrid->->getEnvironment()->getRootNode()))
+    if(!mTravGrid->toGrid(goal_world, goal_x, goal_y, mTravGrid->getEnvironment()->getRootNode()))
     {
         LOG_ERROR("DStarLite: Error goal pos is out of grid");
         return false;
