@@ -190,13 +190,19 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
 
 bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_map, enum Error* error)
 {
+    base::Vector3d start_world = start_map;
+    base::Vector3d goal_world = goal_map;
+    
+    start_world.z() = 0;
+    goal_world.z() = 0;
+    
     size_t start_x = 0, start_y = 0, goal_x = 0, goal_y = 0;
-    if(!mTravGrid->toGrid(start_map.x(), start_map.y(), start_x, start_y))
+    if(!mTravGrid->toGrid(start_world, start_x, start_y, mTravGrid->getFrameNode()))
     {
         LOG_ERROR("DStarLite: Error start pos is out of grid");
         return false;
     }
-    if(!mTravGrid->toGrid(goal_map.x(), goal_map.y(), goal_x, goal_y))
+    if(!mTravGrid->toGrid(goal_world, goal_x, goal_y, mTravGrid->getFrameNode()))
     {
         LOG_ERROR("DStarLite: Error goal pos is out of grid");
         return false;
@@ -344,7 +350,7 @@ std::vector<base::Vector3d> DStarLite::getTrajectoryMap() const
     std::vector<base::Vector3d> ret;
     for(std::list<dstar_lite::state>::iterator it = path.begin(); it != path.end(); it++)
     {
-        ret.push_back(mTravGrid->fromGrid(it->x, it->y));
+        ret.push_back(mTravGrid->fromGrid(it->x, it->y, mTravGrid->getFrameNode()));
     }
     return ret;
 }
@@ -358,6 +364,19 @@ bool DStarLite::getCost(int x, int y, double& cost) {
         return false;
     }
 }
+
+bool DStarLite::getCostWorld(double x, double y, double& cost)
+{
+    size_t x_local;
+    size_t y_local;
+    Eigen::Vector3d pos(x, y, 0);
+    if(!mTravGrid->toGrid(pos, x_local, y_local, mTravGrid->getFrameNode()))
+    {
+        return false;
+    }
+    return getCost(x_local, y_local, cost);
+}
+
 
 bool DStarLite::getTerrainClass(int x, int y, int& class_) {
     double cost_tmp = 0.0;
