@@ -135,6 +135,13 @@ class DStarLite
      * If the cell (x,y) has not been added yet false will be returned.
      */
     bool getCost(int x, int y, double& cost);
+
+        /**
+     * Allows to request the cost of the cell within the DStar-Lite map (world/root frame).
+     * If the cell (x,y) has not been added yet false will be returned.
+     */
+    bool getCostWorld(double x, double y, double& cost);
+
     
     /**
      * Allows to request the cost of the cell within the DStar-Lite map (world/root frame).
