@@ -246,9 +246,9 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error
     // Removes obstacles around the robot.
     if(mRemoveObstaclesRadius > 0 && mTravGrid  != NULL) {
         // Convert radius to grid cells, assuming scaleX == scaleY.
-        int radius_cells = mRemoveObstaclesRadius * mTravGrid->getScaleX();
+        int radius_cells = ceil(mRemoveObstaclesRadius / mTravGrid->getScaleX());
         int left_x = start_x - radius_cells, right_x = start_x + radius_cells;
-        int top_y = start_y - radius_cells, bottom_y = start_y + start_y;
+        int top_y = start_y - radius_cells, bottom_y = start_y + radius_cells;
         if(left_x < 0)
             left_x = 0;
         if(right_x > (int)mTravGrid->getCellSizeX() - 1)
@@ -274,6 +274,7 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error
                     ret = mDStarLite->getCost(x, y, cost);
                     if(!ret) { // Patches not yet available.
                         counter_patches_no_cost++;
+                        continue;
                     }
                     if(ret && cost == -1) { // Obstacle found.
                         counter_removed_obstacles++;
