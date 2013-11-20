@@ -65,8 +65,7 @@ class DStarLite
 {
  public:
     enum Error {NONE, 
-            GOAL_SET_ON_OBSTACLE, 
-            OBSTACLE_SET_ON_GOAL, 
+            GOAL_ON_OBSTACLE, 
             NO_PATH_TO_GOAL,
             GOAL_OUT_OF_GRID,
             START_OUT_OF_GRID};

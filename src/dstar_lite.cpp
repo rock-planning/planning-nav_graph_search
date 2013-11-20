@@ -196,15 +196,25 @@ bool DStarLite::run(const base::Vector3d& start_map, const base::Vector3d& goal_
     start_world.z() = 0;
     goal_world.z() = 0;
     
+    if(error != NULL) {
+        *error = NONE;
+    }
+    
     size_t start_x = 0, start_y = 0, goal_x = 0, goal_y = 0;
     if(!mTravGrid->toGrid(start_world, start_x, start_y, mTravGrid->getEnvironment()->getRootNode()))
     {
         LOG_ERROR("DStarLite: Error start pos is out of grid");
+        if(error != NULL) {
+            *error = START_OUT_OF_GRID;
+        }
         return false;
     }
     if(!mTravGrid->toGrid(goal_world, goal_x, goal_y, mTravGrid->getEnvironment()->getRootNode()))
     {
         LOG_ERROR("DStarLite: Error goal pos is out of grid");
+        if(error != NULL) {
+            *error = GOAL_OUT_OF_GRID;
+        }
         return false;
     }
     
@@ -225,7 +235,7 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error
         if(mDStarLite->getCost(goal_x, goal_y, cost)) { // The cost could be requested (cell is available).
             if(cost < 0) { // Obstacle.
                 if(error != NULL) {
-                    *error = GOAL_SET_ON_OBSTACLE;
+                    *error = GOAL_ON_OBSTACLE;
                 }
                 LOG_WARN("DStarLite: New goal position has been placed on an obstacle, no planning will be exceuted");
                 return false;
