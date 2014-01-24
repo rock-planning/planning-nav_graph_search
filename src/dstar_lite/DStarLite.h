@@ -147,7 +147,7 @@ class DStarLite {
   double mMapMinCost, mMapMaxCost;
 
   bool   close(double x, double y);
-  void   makeNewCell(state u);
+  bool   makeNewCell(state u);
   double getG(state u);
   double getRHS(state u);
   void   setG(state u, double g);

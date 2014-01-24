@@ -301,15 +301,16 @@ void DStarLite::init(int sX, int sY, int gX, int gY) {
  * --------------------------
  * Checks if a cell is in the hash table, if not it adds it in.
  */
-void DStarLite::makeNewCell(state u) {
+bool DStarLite::makeNewCell(state u) {
   
   if (cellHash.find(u) != cellHash.end()) {
-    return;
+    return false;
   }
   cellInfo tmp;
   tmp.g       = tmp.rhs = heuristic(u,s_goal);
   tmp.cost    = C1;
   cellHash[u] = tmp;
+  return true;
 }
 
 /* double DStarLite::getG(state u)
@@ -586,7 +587,7 @@ void DStarLite::updateCell(int x, int y, double val) {
     return;
   }
 
-  makeNewCell(u); 
+  makeNewCell(u);
   cellHash[u].cost = val;
 
   updateVertex(u);

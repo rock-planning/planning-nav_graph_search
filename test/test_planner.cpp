@@ -71,7 +71,7 @@ timeval start, end;
 void executePlanning(DStarLite& dstar_lite, std::string test_description) {
     double path_cost = 0;
     int start_x, start_y, goal_x, goal_y;
-    printf("%d map updates will be executed after each new start position\n", width);
+    printf("%d map updates will be executed after each new start position\n", (int)width);
     gettimeofday(&start, 0);    
     for(int i_goal=0; i_goal<num_change_goal; ++i_goal) {
         goal_x = rand()%width;
