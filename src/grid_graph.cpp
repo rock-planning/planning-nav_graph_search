@@ -80,15 +80,15 @@ float  GridGraph::getValue(size_t x, size_t y) const
 void GridGraph::setValue(size_t x, size_t y, float value)
 { m_values[y * m_xsize + x] = value; }
 
-uint8_t  GridGraph::getParents(size_t x, size_t y) const
+boost::uint8_t  GridGraph::getParents(size_t x, size_t y) const
 { return m_parents[y * m_xsize + x]; }
-uint8_t& GridGraph::getParents(size_t x, size_t y)
+boost::uint8_t& GridGraph::getParents(size_t x, size_t y)
 { return m_parents[y * m_xsize + x]; }
-void GridGraph::setParent(size_t x, size_t y, uint8_t new_parent)
+void GridGraph::setParent(size_t x, size_t y, boost::uint8_t new_parent)
 { getParents(x, y) |= new_parent; }
-void GridGraph::setParents(size_t x, size_t y, uint8_t mask)
+void GridGraph::setParents(size_t x, size_t y, boost::uint8_t mask)
 { getParents(x, y) = mask; }
-void GridGraph::clearParent(size_t x, size_t y, uint8_t old_parent)
+void GridGraph::clearParent(size_t x, size_t y, boost::uint8_t old_parent)
 { getParents(x, y) &= ~old_parent; }
 void GridGraph::save(std::ostream& io) const
 {
