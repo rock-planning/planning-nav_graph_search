@@ -380,23 +380,6 @@ bool DStarLite::getCostWorld(double x, double y, double& cost)
     return getCost(x_local, y_local, cost);
 }
 
-
-bool DStarLite::getTerrainClass(int x, int y, int& class_) {
-    double cost_tmp = 0.0;
-    if(mDStarLite->getCost(x, y, cost_tmp)) {
-        std::map<float,int>::iterator it = mCost2ClassMap.find(cost_tmp);
-        if(it == mCost2ClassMap.end()) {
-            LOG_WARN("DStarLite: Mapping of cost %4.2f to terrain-class is not available", cost_tmp);
-            return false;
-        } else {
-            class_ = it->second;
-            return true;
-        }
-    } else { // Cell not available yet.
-        return false;
-    }
-}
-
 } // end namespace nav_graph_search
 
 
