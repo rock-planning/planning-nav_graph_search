@@ -16,8 +16,7 @@
 #ifndef NAV_DSTAR_LITE_HPP
 #define NAV_DSTAR_LITE_HPP
 
-#include <envire/maps/Grids.hpp>
-#include <nav_graph_search/terrain_classes.hpp>
+#include <envire/maps/TraversabilityGrid.hpp>
 #include <base/geometry/spline.h>
 
 namespace dstar_lite {
@@ -73,14 +72,8 @@ class DStarLite
     /**
      * Creates the cost map by passing the parameters to TraversabilitySearch and
      * allocates the internal dstar_lite::DStarLite object.
-     * \param classes Maps the classes to a value representing the speed
-     * of the robot traversing the cell (should be described by m/time). The passed map and the classes 
-     * are used to generate a cost map containing (for each cell) the time for traversing.
-     * The internal DStar-Lite cost map is synchronized with this cost map (containing
-     * some necessary adaption: >= 1000000 are mapped to -1 to represent obstacles
-     * and all other costs are incremented by 1 to avoid costs between 0 and 1 [0,1)).
      */
-    DStarLite(TerrainClasses const& classes);
+    DStarLite();
 
     /**
      * Deallocates the internal dstar_lite::DStarLite object.
@@ -159,10 +152,6 @@ class DStarLite
   
     
  private:     
-    /** Maps terrain class to cost. */
-    std::map<int,TerrainClass> mClass2CostMap;
-    /** Maps cost to terrain class. */
-    std::map<float,int> mCost2ClassMap;
     dstar_lite::DStarLite* mDStarLite;
     /** First received trav. grid, used as the world grid. */
     envire::TraversabilityGrid* mTravGrid;

@@ -7,22 +7,11 @@
 
 namespace nav_graph_search {
 
-DStarLite::DStarLite(const nav_graph_search::TerrainClasses& classes) : mClass2CostMap(), 
-        mCost2ClassMap(), mDStarLite(NULL), mTravGrid(NULL), mEnv(), mStatistics(),
+DStarLite::DStarLite() :mDStarLite(NULL), mTravGrid(NULL), mEnv(), mStatistics(),
         mNewTravGrid(NULL), mNewTravFrameNode(NULL), mRemoveObstaclesRadius(0.0)
 {
     mDStarLite = new dstar_lite::DStarLite();
 
-    for(TerrainClasses::const_iterator it = classes.begin(); it != classes.end(); it++)
-    {
-        mClass2CostMap.insert(std::pair<int,TerrainClass>(it->getNumber(), *it));
-        mCost2ClassMap.insert(std::pair<float,int>(it->getCost(), it->getNumber()));
-        //FIXME add scale
-        if(it->getCost() >= 0 && it->getCost() < 1.0) 
-        {
-            throw std::runtime_error("Error costs between 0 and <1 are not allowed");
-        }
-    }
     mDStarLite->init(0,0,1,1);
 }
 
@@ -34,15 +23,11 @@ DStarLite::~DStarLite() {
 
 void DStarLite::updateTraversability(int x, int y, int terrain_class)
 {
-    std::map<int,TerrainClass>::iterator it = mClass2CostMap.find(terrain_class);
-    if(it == mClass2CostMap.end()) {
-        LOG_WARN("DStarLite: Passed terrain class %d is unknown, traversability map has not been updated!", terrain_class); 
-        return;
-    }
+    envire::TraversabilityClass klass = mTravGrid->getTraversabilityClass(terrain_class);
     
     double new_cost = -1; // Magic value for not traversable.
-    if(it->second.isTraversable()) {
-        new_cost = it->second.getCost(); // FIXME scale klass cost
+    if(klass.isTraversable()) {
+        new_cost = 1 + 1 - klass.getDrivability(); 
     }
     mDStarLite->updateCell(x, y, new_cost);
     
@@ -50,7 +35,7 @@ void DStarLite::updateTraversability(int x, int y, int terrain_class)
     // (before the borders have been added) to update cell (0,0) and (1,1)
     double current_cost = 0.0;
     mDStarLite->getCost(x, y, current_cost);
-    if(it->second.getCost() != current_cost) {
+    if(fabs(new_cost - current_cost) > 0.001) {
         LOG_WARN("DStarLite: The current cost %4.2f of cell (%d,%d) could not been updated with %4.2f", 
                 current_cost, x, y, new_cost);
     }
