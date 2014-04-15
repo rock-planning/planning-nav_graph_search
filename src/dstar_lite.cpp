@@ -52,6 +52,9 @@ void DStarLite::updateTraversabilityMap(envire::TraversabilityGrid* new_grid)
 
     envire::TraversabilityGrid::ArrayType &new_data(new_grid->getGridData(envire::TraversabilityGrid::TRAVERSABILITY));
 
+    assert(new_data.shape()[0] == new_grid->getCellSizeY());
+    assert(new_data.shape()[1] == new_grid->getCellSizeX());
+    
     // First received trav grid is used as the world grid.
     if(mTravGrid != NULL) {
         mEnv.detachItem(mTravGrid->getFrameNode());
