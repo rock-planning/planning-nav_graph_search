@@ -288,7 +288,8 @@ bool DStarLite::run(int goal_x, int goal_y, int start_x, int start_y, enum Error
                     cost = -1.0;
                     if(mDStarLite->getCost(x, y, cost) && cost == -1.0) {
                         counter_removed_obstacles++;
-                        updateTraversability(x,y,12); // WARN Using fix class value here.
+                        /*updateTraversability(x,y,12); // WARN Using fix class value here.*/
+                        updateTraversability(x,y,24); // WARN Using fix class value here.
                     }
                 }                   
             }
