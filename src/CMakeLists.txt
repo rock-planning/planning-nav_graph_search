@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}-Wno-deprecated)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 
 rock_library(nav_graph_search
     SOURCES dstar.cpp grid_graph.cpp search.cpp
