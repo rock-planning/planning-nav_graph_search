@@ -66,8 +66,8 @@ namespace nav_graph_search
                 if (!__freelist)
                 {
                     // Allocate one more buffer and fill the freelist with it
-                    __pools.push_back( std::vector<uint8_t>() );
-                    std::vector<uint8_t>& new_pool = __pools.back();
+                    __pools.push_back( std::vector<boost::uint8_t>() );
+                    std::vector<boost::uint8_t>& new_pool = __pools.back();
                     new_pool.resize(__size * POOL_SIZE);
                     for (int i = 0; i < POOL_SIZE; ++i)
                     {
