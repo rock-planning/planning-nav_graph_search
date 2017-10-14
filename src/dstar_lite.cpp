@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 
-#include <base/logging.h>
+#include <base-logging/Logging.hpp>
 
 namespace nav_graph_search {
 

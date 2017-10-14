@@ -17,7 +17,7 @@
 #define NAV_DSTAR_LITE_HPP
 
 #include <envire/maps/TraversabilityGrid.hpp>
-#include <base/geometry/spline.h>
+#include <base/geometry/Spline.hpp>
 
 namespace dstar_lite {
 class DStarLite;

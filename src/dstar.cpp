@@ -2,7 +2,7 @@
 
 #include <boost/tuple/tuple.hpp>
 #include <stdio.h>
-#include <base/float.h>
+#include <base/Float.hpp>
 #include <iostream>
 
 using namespace std;

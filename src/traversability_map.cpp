@@ -4,6 +4,7 @@
 #include <gdal.h>
 #include <gdal_priv.h>
 #include <stdexcept>
+#include <iomanip>
 
 #include <Eigen/LU>
 #include <Eigen/SVD>
