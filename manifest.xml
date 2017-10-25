@@ -6,5 +6,6 @@
 
   <depend package="slam/envire" />
   <depend package="base/types" />
+  <depend package="freeglut3" />
   <tags>needs_opt</tags>
 </package>
